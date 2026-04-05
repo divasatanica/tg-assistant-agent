@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.ts",
   "scripts": {
-    "start": "tsx index.ts"
+    "start": "tsx index.ts",
+    "prepare": "husky"
   },
   "keywords": [],
   "author": "",
@@ -14,7 +15,9 @@
     "@google/adk": "^0.3.0",
     "better-sqlite3": "^12.8.0",
     "markdown-it": "^14.1.1",
+    "node-cron": "^4.2.1",
     "ollama": "^0.6.3",
+    "rss-parser": "^3.13.0",
     "telegraf": "^4.16.3",
     "zod": "^4.3.6"
   },
@@ -22,7 +25,9 @@
     "@google/adk-devtools": "^0.3.0",
     "@types/better-sqlite3": "^7.6.13",
     "@types/markdown-it": "^14.1.2",
+    "@types/node-cron": "^3.0.11",
     "dotenv": "^17.4.0",
+    "husky": "^9.1.7",
     "tsx": "^4.21.0",
     "typescript": "^6.0.2"
   }
