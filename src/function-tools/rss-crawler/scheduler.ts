@@ -1,6 +1,6 @@
 import cron from 'node-cron';
 import { CRAWLER_CATEGORIES } from './config';
-import { fetchAndParseRSS } from '@/tools/rss-feed/parser';
+import { fetchAndParseRSS } from '@/function-tools/rss-feed/parser';
 import { rssDB, articleDB } from '../../utils/sqlite/sqlite';
 
 export function bootstrapCrawler() {
