@@ -76,7 +76,7 @@ export function registerCommandHandler(bot: Telegraf) {
     if (subs.length === 0) {
       return ctx.reply('📭 暂无订阅。使用 /rsssub <url> <标题> 添加。');
     }
-    const text = subs.map((s, i) => `${i + 1}. <b>${s.title}</b>\n   ${s.url}`).join('\n\n');
+    const text = subs.map((s, i) => `${i + 1}. <b>${s.title}</b>\n   ${s.url} [${s.category}]`).join('\n\n');
     ctx.reply(`📋 当前订阅 (${subs.length} 条):\n\n${text}`, { parse_mode: 'HTML' });
   });
 

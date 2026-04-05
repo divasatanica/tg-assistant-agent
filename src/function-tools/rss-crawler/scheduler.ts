@@ -52,7 +52,8 @@ export function bootstrapCrawler() {
             title: item.title || 'No Title',
             link: item.link || sub.url,
             content: item.content || item.contentSnippet || '',
-            pub_date: item.pubDate || new Date().toISOString()
+            pub_date: item.pubDate || new Date().toISOString(),
+            category: sub.category || 'General'
           });
 
           if (isNew) {
@@ -77,13 +78,20 @@ export function bootstrapCleanup(expireDays: number) {
   console.log(`[Cleanup] Bootstrapping DB cleanup scheduler. Expiration set to ${expireDays} days.`);
 
   // 1. 启动时立即执行一次清理
-  const deletedCount = articleDB.deleteOldArticles(expireDays);
-  console.log(`[Cleanup] Initial cleanup executed. Deleted ${deletedCount} old articles.`);
+  if (articleDB.hasTable()) {
+    console.log(`[Cleanup] Initial cleanup started...`);
+    const deletedCount = articleDB.deleteOldArticles(expireDays);
+    console.log(`[Cleanup] Initial cleanup executed. Deleted ${deletedCount} old articles.`);
+  } else {
+    console.log(`[Cleanup] 'articles' table not found yet. Skipping initial cleanup.`);
+  }
 
   // 2. 每天凌晨 0 点执行清理
   cron.schedule('0 0 * * *', () => {
     console.log(`[Cleanup] Running scheduled daily cleanup...`);
-    const count = articleDB.deleteOldArticles(expireDays);
-    console.log(`[Cleanup] Scheduled cleanup completed. Deleted ${count} old articles.`);
+    if (articleDB.hasTable()) {
+      const count = articleDB.deleteOldArticles(expireDays);
+      console.log(`[Cleanup] Scheduled cleanup completed. Deleted ${count} old articles.`);
+    }
   });
 }

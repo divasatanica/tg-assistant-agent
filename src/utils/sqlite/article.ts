@@ -9,6 +9,7 @@ export interface Article {
   content?: string; // 全文/摘要内容
   pub_date?: string;// 发布时间
   created_at?: string;
+  category: string;
 }
 
 export class ArticleDatabase {
@@ -29,6 +30,7 @@ export class ArticleDatabase {
         guid TEXT NOT NULL,
         title TEXT NOT NULL,
         link TEXT NOT NULL,
+        category TEXT NOT NULL,
         content TEXT,
         pub_date DATETIME,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -46,8 +48,8 @@ export class ArticleDatabase {
     // SQLite 的 INSERT OR IGNORE 发生冲突时什么也不做
     try {
       const stmt = this.db.prepare(`
-        INSERT OR IGNORE INTO articles (feed_url, guid, title, link, content, pub_date)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT OR IGNORE INTO articles (feed_url, guid, title, link, content, pub_date, category)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
       `);
       const info = stmt.run(
         article.feed_url,
@@ -55,7 +57,8 @@ export class ArticleDatabase {
         article.title,
         article.link,
         article.content || null,
-        article.pub_date || null
+        article.pub_date || null,
+        article.category
       );
       // 如果 changes > 0，说明插入成功，未触发 unique constraint
       return info.changes > 0;
@@ -77,5 +80,11 @@ export class ArticleDatabase {
     `);
     const info = stmt.run(`-${days} days`);
     return info.changes;
+  }
+
+  hasTable(): boolean {
+    const stmt = this.db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='articles'");
+    const row = stmt.get();
+    return !!row;
   }
 }
