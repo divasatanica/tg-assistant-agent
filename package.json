@@ -1,0 +1,29 @@
+{
+  "name": "my-tg-agent",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "scripts": {
+    "start": "tsx index.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@google/adk": "^0.3.0",
+    "better-sqlite3": "^12.8.0",
+    "markdown-it": "^14.1.1",
+    "ollama": "^0.6.3",
+    "telegraf": "^4.16.3",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@google/adk-devtools": "^0.3.0",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/markdown-it": "^14.1.2",
+    "dotenv": "^17.4.0",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2"
+  }
+}
