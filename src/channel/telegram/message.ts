@@ -29,14 +29,14 @@ export function registerMessageHandler(bot: Telegraf) {
 
       const htmlContentRendered = MarkdownIt().render(response.message.content);
 
-      console.log('safeContent', htmlContentRendered)
+      console.log('safeContent', htmlContentRendered);
 
       await ctx.reply(escapeHTML(htmlContentRendered), {
         reply_parameters: {
           message_id: messageId,
           allow_sending_without_reply: true,
         },
-        parse_mode: 'HTML'
+        parse_mode: 'HTML',
       });
     } catch (error) {
       console.error('Ollama Error:', error);

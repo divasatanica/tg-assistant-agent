@@ -38,7 +38,7 @@ export class RSSDatabase {
   addSubscription(url: string, title: string, category: string = 'General'): boolean {
     try {
       const stmt = this.db.prepare(
-        'INSERT INTO subscriptions (url, title, category) VALUES (?, ?, ?)'
+        'INSERT INTO subscriptions (url, title, category) VALUES (?, ?, ?)',
       );
       stmt.run(url, title, category);
       return true;
@@ -59,9 +59,7 @@ export class RSSDatabase {
 
   // 5. 更新抓取时间 (用于增量更新判断)
   updateLastFetched(url: string) {
-    const stmt = this.db.prepare(
-      'UPDATE subscriptions SET last_fetched = ? WHERE url = ?'
-    );
+    const stmt = this.db.prepare('UPDATE subscriptions SET last_fetched = ? WHERE url = ?');
     stmt.run(new Date().toISOString(), url);
   }
 

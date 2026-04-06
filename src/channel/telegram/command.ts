@@ -22,22 +22,19 @@ export function registerCommandHandler(bot: Telegraf) {
     const id = Date.now().toString(36);
     pendingSubs.set(id, { url, title, userId });
 
-    ctx.reply(
-      `正在订阅: <b>${title}</b>\n请选择类别:`,
-      {
-        parse_mode: 'HTML',
-        ...Markup.inlineKeyboard([
-          [
-            Markup.button.callback('General', `rsssub_cat:${id}:General`),
-            Markup.button.callback('News', `rsssub_cat:${id}:News`)
-          ],
-          [
-            Markup.button.callback('Finance', `rsssub_cat:${id}:Finance`),
-            Markup.button.callback('Blog', `rsssub_cat:${id}:Blog`)
-          ]
-        ])
-      }
-    );
+    ctx.reply(`正在订阅: <b>${title}</b>\n请选择类别:`, {
+      parse_mode: 'HTML',
+      ...Markup.inlineKeyboard([
+        [
+          Markup.button.callback('General', `rsssub_cat:${id}:General`),
+          Markup.button.callback('News', `rsssub_cat:${id}:News`),
+        ],
+        [
+          Markup.button.callback('Finance', `rsssub_cat:${id}:Finance`),
+          Markup.button.callback('Blog', `rsssub_cat:${id}:Blog`),
+        ],
+      ]),
+    });
   });
 
   bot.action(/^rsssub_cat:([a-z0-9]+):(.+)$/, async (ctx) => {
@@ -63,10 +60,8 @@ export function registerCommandHandler(bot: Telegraf) {
 
     // 移除 inline 键盘并更新文本
     await ctx.editMessageText(
-      success
-        ? `✅ 已订阅: <b>${title}</b> [${category}]\n${url}`
-        : `⚠️ 该 URL 已存在: ${url}`,
-      { parse_mode: 'HTML' }
+      success ? `✅ 已订阅: <b>${title}</b> [${category}]\n${url}` : `⚠️ 该 URL 已存在: ${url}`,
+      { parse_mode: 'HTML' },
     );
     await ctx.answerCbQuery();
   });
@@ -76,7 +71,9 @@ export function registerCommandHandler(bot: Telegraf) {
     if (subs.length === 0) {
       return ctx.reply('📭 暂无订阅。使用 /rsssub <url> <标题> 添加。');
     }
-    const text = subs.map((s, i) => `${i + 1}. <b>${s.title}</b>\n   ${s.url} [${s.category}]`).join('\n\n');
+    const text = subs
+      .map((s, i) => `${i + 1}. <b>${s.title}</b>\n   ${s.url} [${s.category}]`)
+      .join('\n\n');
     ctx.reply(`📋 当前订阅 (${subs.length} 条):\n\n${text}`, { parse_mode: 'HTML' });
   });
 

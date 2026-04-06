@@ -3,11 +3,11 @@ import Database from 'better-sqlite3';
 export interface Article {
   id?: number;
   feed_url: string; // 来源于哪个 RSS url
-  guid: string;     // 每篇文章的唯一标识符
+  guid: string; // 每篇文章的唯一标识符
   title: string;
-  link: string;     // 文章原始链接
+  link: string; // 文章原始链接
   content?: string; // 全文/摘要内容
-  pub_date?: string;// 发布时间
+  pub_date?: string; // 发布时间
   created_at?: string;
   category: string;
 }
@@ -58,7 +58,7 @@ export class ArticleDatabase {
         article.link,
         article.content || null,
         article.pub_date || null,
-        article.category
+        article.category,
       );
       // 如果 changes > 0，说明插入成功，未触发 unique constraint
       return info.changes > 0;
@@ -83,7 +83,9 @@ export class ArticleDatabase {
   }
 
   hasTable(): boolean {
-    const stmt = this.db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='articles'");
+    const stmt = this.db.prepare(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='articles'",
+    );
     const row = stmt.get();
     return !!row;
   }

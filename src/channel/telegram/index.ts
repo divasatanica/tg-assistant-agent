@@ -7,5 +7,5 @@ export function bootstrapTelegramChannel() {
   registerMessageHandler(bot);
 
   bot.launch();
-  console.log('Telegram channel is running...')
+  console.log('Telegram channel is running...');
 }

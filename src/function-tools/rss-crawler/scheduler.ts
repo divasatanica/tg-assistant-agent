@@ -22,7 +22,7 @@ export function bootstrapCrawler() {
 
       // 1. 获取这个类别下的所有订阅源
       const subscriptions = rssDB.getAllSubscriptions();
-      const targetSubs = subscriptions.filter(sub => sub.category === category);
+      const targetSubs = subscriptions.filter((sub) => sub.category === category);
 
       if (targetSubs.length === 0) {
         console.log(`[Crawler] No subscriptions found for category: ${category}`);
@@ -53,7 +53,7 @@ export function bootstrapCrawler() {
             link: item.link || sub.url,
             content: item.content || item.contentSnippet || '',
             pub_date: item.pubDate || new Date().toISOString(),
-            category: sub.category || 'General'
+            category: sub.category || 'General',
           });
 
           if (isNew) {
@@ -75,7 +75,9 @@ export function bootstrapCrawler() {
 }
 
 export function bootstrapCleanup(expireDays: number) {
-  console.log(`[Cleanup] Bootstrapping DB cleanup scheduler. Expiration set to ${expireDays} days.`);
+  console.log(
+    `[Cleanup] Bootstrapping DB cleanup scheduler. Expiration set to ${expireDays} days.`,
+  );
 
   // 1. 启动时立即执行一次清理
   if (articleDB.hasTable()) {
