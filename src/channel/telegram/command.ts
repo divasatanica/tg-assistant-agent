@@ -72,7 +72,10 @@ export function registerCommandHandler(bot: Telegraf) {
       return ctx.reply('📭 暂无订阅。使用 /rsssub <url> <标题> 添加。');
     }
     const text = subs
-      .map((s, i) => `${i + 1}. <b>${s.title}</b>\n   ${s.url} [${s.category}]`)
+      .map(
+        (s, i) =>
+          `${i + 1}. <b>${s.title}</b>\n   ${s.url} [${s.category}] [${s.subscription_type}]`,
+      )
       .join('\n\n');
     ctx.reply(`📋 当前订阅 (${subs.length} 条):\n\n${text}`, { parse_mode: 'HTML' });
   });

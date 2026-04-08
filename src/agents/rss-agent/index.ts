@@ -6,8 +6,6 @@ import { scraperNode } from './nodes/scraper';
 import { analyzerNode } from './nodes/analyzer';
 import { reporterNode } from './nodes/reporter';
 
-console.log(1);
-
 const workflow = new StateGraph(AgentState);
 const forkAfterRssFetched = ['reporter', 'analyzer'];
 workflow
