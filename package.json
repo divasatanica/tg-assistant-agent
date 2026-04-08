@@ -5,9 +5,16 @@
   "main": "index.ts",
   "scripts": {
     "start": "tsx index.ts",
-    "prepare": "husky",
+    "prepare": "husky install",
     "lint": "eslint .",
-    "format": "prettier --write \"src/**/*.ts\""
+    "format": "prettier --write \"src/**/*.ts\"",
+    "lint-staged": "lint-staged"
+  },
+  "lint-staged": {
+    "src/**/*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ]
   },
   "keywords": [],
   "author": "",
@@ -29,6 +36,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@google/adk-devtools": "^0.3.0",
     "@types/better-sqlite3": "^7.6.13",
     "@types/jsdom": "^28.0.1",
@@ -40,6 +48,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
     "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "prettier": "^3.8.1",
     "tsx": "^4.21.0",
     "typescript": "^6.0.2",
