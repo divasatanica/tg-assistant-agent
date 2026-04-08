@@ -8,6 +8,7 @@ export interface RSSSubscription {
   category?: string;
   last_fetched?: string; // ISO 格式时间
   created_at?: string;
+  subscription_type?: string;
 }
 
 export class RSSDatabase {

@@ -25,3 +25,5 @@ Output Format:
 - Risk Checklist: What to watch (Key economic dates/events).
 
 - Don't output too much, just output the most important information, limit the output within 500 words.
+
+- Use Simplified Chinese as report's language.

@@ -10,10 +10,21 @@ export function wrapMarkdownMessage(message: string) {
   return escapeHTML(htmlContentRendered);
 }
 
-export function sendMarkdownMessage(bot: Telegraf, chatId: string, message: string, messageThreadId?: number) {
+export function sendMarkdownMessage(
+  bot: Telegraf,
+  chatId: string,
+  message: string,
+  messageThreadId?: number,
+) {
   return bot.telegram.sendMessage(chatId, wrapMarkdownMessage(message), {
     message_thread_id: messageThreadId,
     parse_mode: 'HTML',
+  });
+}
+
+export function sendRawMessage(bot: Telegraf, chatId: string, message: string, messageThreadId?: number) {
+  return bot.telegram.sendMessage(chatId, message, {
+    message_thread_id: messageThreadId,
   });
 }
 
