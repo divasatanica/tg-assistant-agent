@@ -2,16 +2,20 @@
   "name": "my-tg-agent",
   "version": "1.0.0",
   "description": "",
-  "main": "index.ts",
+  "main": "packages/bot/src/index.ts",
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "start": "tsx index.ts",
+    "start": "tsx packages/bot/src/index.ts",
     "prepare": "husky install",
     "lint": "eslint .",
-    "format": "prettier --write \"src/**/*.ts\"",
+    "format": "prettier --write \"packages/**/*.ts\"",
     "lint-staged": "lint-staged"
   },
   "lint-staged": {
-    "src/**/*.ts": [
+    "packages/**/*.ts": [
       "eslint --fix",
       "prettier --write"
     ]
@@ -19,30 +23,10 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "module",
-  "dependencies": {
-    "@google/adk": "^0.3.0",
-    "@langchain/core": "^1.1.39",
-    "@langchain/langgraph": "^1.2.7",
-    "@langchain/ollama": "^1.2.6",
-    "@mozilla/readability": "^0.6.0",
-    "better-sqlite3": "^12.8.0",
-    "jsdom": "^29.0.2",
-    "markdown-it": "^14.1.1",
-    "node-cron": "^4.2.1",
-    "ollama": "^0.6.3",
-    "rss-parser": "^3.13.0",
-    "telegraf": "^4.16.3",
-    "zod": "^4.3.6"
-  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@google/adk-devtools": "^0.3.0",
-    "@types/better-sqlite3": "^7.6.13",
-    "@types/jsdom": "^28.0.1",
-    "@types/markdown-it": "^14.1.2",
-    "@types/mozilla-readability": "^0.2.1",
-    "@types/node-cron": "^3.0.11",
+    "@types/node": "^20.19.39",
     "dotenv": "^17.4.0",
     "eslint": "^10.2.0",
     "eslint-config-prettier": "^10.1.8",

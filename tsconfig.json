@@ -1,32 +1,12 @@
 {
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "lib": [
-      "ES2022"
-    ],
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "resolveJsonModule": true,
-    "paths": {
-      "@/*": [
-        "./src/*"
-      ]
-    }
-  },
-  "ts-node": {
-    "esm": true,
-    "experimentalSpecifierResolution": "node"
-  },
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
+  "files": [],
+  "include": [],
+  "references": [
+    { "path": "./packages/utils" },
+    { "path": "./packages/function-tools" },
+    { "path": "./packages/channel" },
+    { "path": "./packages/agents" },
+    { "path": "./packages/cron" },
+    { "path": "./packages/bot" }
   ]
 }
