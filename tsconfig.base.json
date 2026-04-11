@@ -15,8 +15,9 @@
     "sourceMap": true,
     "outDir": "./dist",
     "rootDir": "./src",
+    "noEmit": true,
     "types": [
-      "node"
+      "bun"
     ]
   }
 }

@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+import { Database } from 'bun:sqlite';
 
 // 定义订阅项的类型
 export interface RSSSubscription {
@@ -12,9 +12,9 @@ export interface RSSSubscription {
 }
 
 export class RSSDatabase {
-  private db: Database.Database;
+  private db: Database;
 
-  constructor(db: Database.Database) {
+  constructor(db: Database) {
     this.db = db;
     this.init();
   }
@@ -32,7 +32,7 @@ export class RSSDatabase {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       );
     `;
-    this.db.exec(query);
+    this.db.run(query);
   }
 
   // 3. 添加订阅
@@ -44,7 +44,7 @@ export class RSSDatabase {
       stmt.run(url, title, category);
       return true;
     } catch (error: any) {
-      if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+      if (error.message.includes('UNIQUE constraint failed')) {
         console.warn(`URL 已存在: ${url}`);
         return false;
       }
