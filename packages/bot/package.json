@@ -1,0 +1,12 @@
+{
+  "name": "@krobert/bot",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "dependencies": {
+    "@krobert/channel": "*",
+    "@krobert/cron": "*",
+    "@krobert/agents": "*",
+    "dotenv": "^17.4.0"
+  }
+}

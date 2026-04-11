@@ -1,0 +1,20 @@
+{
+  "name": "@krobert/channel",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "types": "./dist/index.d.ts",
+  "dependencies": {
+    "telegraf": "^4.16.3",
+    "markdown-it": "^14.1.1",
+    "@krobert/utils": "*",
+    "@krobert/agents": "*"
+  },
+  "devDependencies": {
+    "@types/markdown-it": "^14.1.2"
+  }
+}

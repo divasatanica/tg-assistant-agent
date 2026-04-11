@@ -1,0 +1,19 @@
+{
+  "name": "@krobert/cron",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "types": "./dist/index.d.ts",
+  "dependencies": {
+    "node-cron": "^4.2.1",
+    "@krobert/agents": "*",
+    "@krobert/utils": "*"
+  },
+  "devDependencies": {
+    "@types/node-cron": "^3.0.11"
+  }
+}

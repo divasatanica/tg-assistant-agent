@@ -1,0 +1,22 @@
+{
+  "name": "@krobert/agents",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "types": "./dist/index.d.ts",
+  "dependencies": {
+    "@google/adk": "^0.3.0",
+    "@langchain/core": "^1.1.39",
+    "@langchain/langgraph": "^1.2.7",
+    "@langchain/ollama": "^1.2.6",
+    "ollama": "^0.6.3",
+    "zod": "^4.3.6",
+    "@krobert/utils": "*",
+    "@krobert/function-tools": "*",
+    "@krobert/channel": "*"
+  }
+}

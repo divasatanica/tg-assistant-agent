@@ -1,0 +1,20 @@
+{
+  "name": "@krobert/function-tools",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*/index.ts"
+  },
+  "types": "./dist/index.d.ts",
+  "dependencies": {
+    "@mozilla/readability": "^0.6.0",
+    "jsdom": "^29.0.2",
+    "rss-parser": "^3.13.0"
+  },
+  "devDependencies": {
+    "@types/jsdom": "^28.0.1",
+    "@types/mozilla-readability": "^0.2.1"
+  }
+}
