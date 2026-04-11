@@ -1,6 +1,6 @@
 import { rssDB } from '@krobert/utils/sqlite/sqlite';
 import { AgentState } from '../global';
-import { fetchAndParseRSS, resolveRssFeed } from '@krobert/function-tools/rss-feed/parser';
+import { fetchAndParseRSS, resolveRssFeed } from '@krobert/function-tools/rss-feed';
 import Parser from 'rss-parser';
 
 // 节点 1: 抓取数据

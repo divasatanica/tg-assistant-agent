@@ -1,3 +1,5 @@
+import { DateTime } from 'luxon';
+
 export function escapeHTML(str: string) {
   const supportedTags = [
     'b',
@@ -30,4 +32,20 @@ export function escapeHTML(str: string) {
     }
     return supportedTags.includes(tagName.toLowerCase()) ? match : '';
   });
+}
+
+export function formatTime(
+  date: Date | string,
+  {
+    format = 'yyyy-MM-dd HH:mm:ss ZZZZ',
+    timezone = '',
+  }: { format?: string; timezone?: string } = {},
+) {
+  const dateTime = typeof date === 'string' ? DateTime.fromISO(date) : DateTime.fromJSDate(date);
+
+  if (timezone) {
+    return dateTime.setZone(timezone).toFormat(format);
+  }
+
+  return dateTime.toFormat(format);
 }
