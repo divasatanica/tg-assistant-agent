@@ -5,7 +5,10 @@ import Parser from 'rss-parser';
 
 // 节点 1: 抓取数据
 export const scraperNode = async (state: typeof AgentState.State) => {
-  const rssList = rssDB.getAllSubscriptions();
+  const _rssList = rssDB.getAllSubscriptions();
+
+  const categories = state.categories;
+  const rssList = _rssList.filter((rss) => categories.includes(rss.category!));
 
   console.log('rsslist', rssList);
 

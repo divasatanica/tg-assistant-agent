@@ -27,11 +27,12 @@ workflow
 // 3. 编译成可执行的 App
 const app = workflow.compile();
 
-export async function runAgent() {
+export async function runAgent(categories: string[]) {
   const systemPrompt = readFileSync('./src/agents/rss-agent/system-prompt-Role.md', 'utf-8');
   const myCustomSystemPrompt = new SystemMessage(systemPrompt);
   const result = await app.invoke({
     messages: [myCustomSystemPrompt], // 初始消息为空
+    categories,
   });
 
   return {

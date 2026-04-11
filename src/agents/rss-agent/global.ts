@@ -1,10 +1,11 @@
+import { OLLAMA_MODEL_NAME } from '@/utils/config';
 import { BaseMessage } from '@langchain/core/messages';
 import { Annotation } from '@langchain/langgraph';
 import { ChatOllama } from '@langchain/ollama';
 import Parser from 'rss-parser';
 
 export const model = new ChatOllama({
-  model: 'gemma4:26b',
+  model: OLLAMA_MODEL_NAME,
   temperature: 0,
   numCtx: 128000,
 });
@@ -19,4 +20,6 @@ export const AgentState = Annotation.Root({
   rssData: Annotation<Record<string, Parser.Output<any>[]>>(),
   // 最终生成的分析报告
   finalReport: Annotation<string>(),
+  // 初始注入的要分析的订阅类目
+  categories: Annotation<string[]>(),
 });

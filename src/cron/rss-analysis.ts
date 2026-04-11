@@ -8,7 +8,7 @@ export function bootstrapRssAnalysisCron() {
   cron.schedule('0 8 * * *', async () => {
     console.log('[Cron] Execution started: RSS Analysis (8 AM)...');
     try {
-      await runAgent();
+      await runAgent(['News']);
       console.log('[Cron] Execution completed: RSS Analysis');
     } catch (error) {
       console.error('[Cron] Error executing RSS Analysis:', error);

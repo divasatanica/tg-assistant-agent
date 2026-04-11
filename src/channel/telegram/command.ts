@@ -1,5 +1,6 @@
 import { Telegraf, Markup } from 'telegraf';
 import { rssDB } from '@/utils/sqlite/sqlite';
+import { runAgent } from '@/agents/rss-agent';
 
 // 临时存储待选类别的订阅信息 (避免 callback_data 长度超过 64 bytes)
 const pendingSubs = new Map<string, { url: string; title: string; userId: number }>();
@@ -87,5 +88,20 @@ export function registerCommandHandler(bot: Telegraf) {
     }
     rssDB.removeSubscription(url);
     ctx.reply(`🗑️ 已取消订阅: ${url}`);
+  });
+
+  bot.command('rsssum', (ctx) => {
+    const text = ctx.message.text;
+    const match = text.match(/^\/rsssum\s+(.+)$/);
+
+    if (!match) {
+      return ctx.reply('❌ 用法: /rsssum 类别1 类别2 ...');
+    }
+
+    const categories = match[1].trim().split(/\s+/);
+
+    runAgent(categories);
+
+    ctx.reply(`正在分析类别: ${categories.join(', ')} ...`);
   });
 }
