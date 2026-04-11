@@ -2,8 +2,8 @@ import { registerCommandHandler } from './command';
 import { registerMessageHandler } from './message';
 import { bot } from './telegraf';
 
-export function bootstrapTelegramChannel(onRunAgent?: (categories: string[]) => void) {
-  registerCommandHandler(bot, onRunAgent);
+export function bootstrapTelegramChannel() {
+  registerCommandHandler(bot);
   registerMessageHandler(bot);
 
   bot.launch();

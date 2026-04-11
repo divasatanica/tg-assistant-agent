@@ -1,14 +1,10 @@
-import { OLLAMA_MODEL_NAME } from '@krobert/utils/config';
 import { BaseMessage } from '@langchain/core/messages';
 import { Annotation } from '@langchain/langgraph';
-import { ChatOllama } from '@langchain/ollama';
 import Parser from 'rss-parser';
 
-export const model = new ChatOllama({
-  model: OLLAMA_MODEL_NAME,
-  temperature: 0,
-  numCtx: 128000,
-});
+import { ollamaModelFactory } from '../common/model';
+
+export const model = ollamaModelFactory();
 
 // 定义全局状态架构
 export const AgentState = Annotation.Root({

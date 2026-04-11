@@ -1,10 +1,11 @@
 import { Telegraf, Markup } from 'telegraf';
 import { rssDB } from '@krobert/utils/sqlite/sqlite';
+import { runAgent } from '@krobert/agents/rss-agent/index';
 
 // 临时存储待选类别的订阅信息 (避免 callback_data 长度超过 64 bytes)
 const pendingSubs = new Map<string, { url: string; title: string; userId: number }>();
 
-export function registerCommandHandler(bot: Telegraf, onRunAgent?: (categories: string[]) => void) {
+export function registerCommandHandler(bot: Telegraf) {
   bot.command('rsssub', (ctx) => {
     // 格式: /rsssub <url> "<标题>"
     const text = ctx.message.text;
@@ -99,7 +100,7 @@ export function registerCommandHandler(bot: Telegraf, onRunAgent?: (categories: 
 
     const categories = match[1].trim().split(/\s+/);
 
-    onRunAgent?.(categories);
+    runAgent(categories);
 
     ctx.reply(`正在分析类别: ${categories.join(', ')} ...`);
   });
