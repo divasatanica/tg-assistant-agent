@@ -1,4 +1,5 @@
 import { AgentState, model } from '../global';
+import { logger, parseMessageContent } from '@krobert/utils';
 
 export const analyzerNode = async (state: typeof AgentState.State) => {
   const isEmpty =
@@ -8,10 +9,13 @@ export const analyzerNode = async (state: typeof AgentState.State) => {
     return { finalReport: 'No RSS feeds found.' };
   }
 
+  logger.info('[RSSAgent] rssData retrieved, start analyzing');
+
   const context = JSON.stringify(state.rssData);
   const response = await model.invoke([
     ...(state.messages || []),
     ['user', `Here's fetched feeds organized by category as JSON format: ${context}`],
   ]);
-  return { finalReport: response.content as string };
+
+  return { finalReport: parseMessageContent(response.content) };
 };

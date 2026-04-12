@@ -38,7 +38,7 @@ export const scraperNode = async (state: typeof AgentState.State) => {
     {} as Record<string, Array<Parser.Output<any>>>,
   );
 
-  logger.info('[RSSAgent] concatedData', concatedData);
+  logger.debug('[RSSAgent] concatedData', concatedData);
 
   return { rssData: concatedData };
 };

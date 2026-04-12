@@ -33,12 +33,12 @@ export const reporterNode = async (state: typeof AgentState.State) => {
       Number(process.env.TG_NEWS_REPORT_THREAD_ID),
     );
 
-    logger.info('[RSSAgent] Send RSS report result', result);
+    logger.debug('[RSSAgent] Send RSS report result', result);
 
     return {};
   }
 
-  logger.info('[RSSAgent] rssdata', state.rssData);
+  logger.debug('[RSSAgent] rssdata', state.rssData);
 
   const messageSummary = formatNewList(state.rssData);
 
@@ -54,7 +54,7 @@ export const reporterNode = async (state: typeof AgentState.State) => {
         );
       })
       .then((res) =>
-        logger.info('[RSSAgent] Send RSS report result for category', { category, result: res }),
+        logger.debug('[RSSAgent] Send RSS report result for category', { category, result: res }),
       );
   }, Promise.resolve());
 

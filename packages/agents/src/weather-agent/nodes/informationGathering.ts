@@ -1,4 +1,4 @@
-import { getGoogleSearchUrl, logger } from '@krobert/utils';
+import { getGoogleSearchUrl, logger, parseMessageContent } from '@krobert/utils';
 
 import { AgentState, model } from '../global';
 
@@ -48,5 +48,5 @@ export const informationGatheringNode = async (state: typeof AgentState.State) =
     usage_metadata,
   });
 
-  return { messages: [result], rawBrowserData: result.content };
+  return { messages: [result], rawBrowserData: parseMessageContent(result.content) };
 };
