@@ -20,7 +20,7 @@ export function bootstrapWeatherCron() {
 
   // 每 30 秒运行一次逻辑检查
   // node-cron 支持 6 位表达式 (秒 分 时 日 月 周)
-  cron.schedule('*/30 * * * * *', async () => {
+  cron.schedule('*/30 8-16 * * *', async () => {
     const now = new Date();
     const minutes = now.getMinutes();
     const seconds = now.getSeconds();

@@ -8,7 +8,7 @@ dotenv.config();
 
 export async function bootstrap() {
   bootstrapChannel();
-  startCron();
+  // startCron();
 
   console.log('Agent 已经启动...');
 }

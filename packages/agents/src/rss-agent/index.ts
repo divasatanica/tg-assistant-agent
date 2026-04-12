@@ -5,6 +5,7 @@ import { AgentState } from './global';
 import { scraperNode } from './nodes/scraper';
 import { analyzerNode } from './nodes/analyzer';
 import { reporterNode } from './nodes/reporter';
+import { join } from 'path';
 
 const workflow = new StateGraph(AgentState);
 const forkAfterRssFetched = ['reporter', 'analyzer'];
@@ -28,7 +29,7 @@ workflow
 const app = workflow.compile();
 
 export async function runAgent(categories: string[]) {
-  const systemPrompt = readFileSync('./src/agents/rss-agent/system-prompt-Role.md', 'utf-8');
+  const systemPrompt = readFileSync(join(__dirname, 'system-prompt-Role.md'), 'utf-8');
   const myCustomSystemPrompt = new SystemMessage(systemPrompt);
   const result = await app.invoke({
     messages: [myCustomSystemPrompt], // 初始消息为空

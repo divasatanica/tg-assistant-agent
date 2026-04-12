@@ -2,9 +2,9 @@ import { BaseMessage } from '@langchain/core/messages';
 import { Annotation } from '@langchain/langgraph';
 import Parser from 'rss-parser';
 
-import { ollamaModelFactory } from '../common/model';
+import { googleModelFactory } from '../common/model';
 
-export const model = ollamaModelFactory();
+export const model = googleModelFactory();
 
 // 定义全局状态架构
 export const AgentState = Annotation.Root({
