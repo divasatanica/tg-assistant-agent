@@ -1,4 +1,5 @@
-import { getGoogleSearchUrl } from '@krobert/utils';
+import { getGoogleSearchUrl, logger } from '@krobert/utils';
+
 import { AgentState, model } from '../global';
 
 export const informationGatheringNode = async (state: typeof AgentState.State) => {
@@ -41,7 +42,7 @@ export const informationGatheringNode = async (state: typeof AgentState.State) =
 
   const { additional_kwargs, tool_calls, usage_metadata } = result;
 
-  console.log('result from informationGathering', {
+  logger.info('[WeatherAgent] result from informationGathering', {
     additional_kwargs,
     tool_calls,
     usage_metadata,

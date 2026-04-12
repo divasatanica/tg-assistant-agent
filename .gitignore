@@ -5,3 +5,4 @@ node_modules
 tsconfig.tsbuildinfo
 *.sqbpro
 .vscode/sftp.json
+logs/**

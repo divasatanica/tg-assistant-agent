@@ -1,4 +1,5 @@
 import { Database } from 'bun:sqlite';
+import { logger } from '../logger';
 
 // 定义订阅项的类型
 export interface RSSSubscription {
@@ -45,7 +46,8 @@ export class RSSDatabase {
       return true;
     } catch (error: any) {
       if (error.message.includes('UNIQUE constraint failed')) {
-        console.warn(`URL 已存在: ${url}`);
+        logger.warn(`[Utils] URL 已存在: ${url}`);
+
         return false;
       }
       throw error;

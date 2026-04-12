@@ -4,6 +4,7 @@ import { informationGatheringNode } from './nodes/informationGathering';
 import { toolNode } from './nodes/tools';
 import { sendMarkdownMessage } from '@krobert/channel/telegram/message';
 import { bot } from '@krobert/channel/telegram/telegraf';
+import { logger } from '@krobert/utils';
 
 function shouldContinue(state: typeof AgentState.State) {
   const lastMessage = state.messages[state.messages.length - 1];
@@ -40,6 +41,7 @@ export async function runAgent(city: string, icao: string) {
     Number(process.env.TG_WEATHER_THREAD_ID!),
   );
 
-  console.log('weather send result', sendResult);
+  logger.info('[WeatherAgent] weather send result', sendResult);
+
   return { analysis: lastMessage.content };
 }

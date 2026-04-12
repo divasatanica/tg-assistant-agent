@@ -1,4 +1,6 @@
 import { rssDB } from '@krobert/utils/sqlite/sqlite';
+import { logger } from '@krobert/utils';
+
 import { AgentState } from '../global';
 import { fetchAndParseRSS, resolveRssFeed } from '@krobert/function-tools/rss-feed';
 import Parser from 'rss-parser';
@@ -10,7 +12,7 @@ export const scraperNode = async (state: typeof AgentState.State) => {
   const categories = state.categories;
   const rssList = _rssList.filter((rss) => categories.includes(rss.category!));
 
-  console.log('rsslist', rssList);
+  logger.info('[RSSAgent] rsslist', rssList);
 
   const data = await Promise.all(
     rssList.map(async (rss) => {
@@ -36,7 +38,7 @@ export const scraperNode = async (state: typeof AgentState.State) => {
     {} as Record<string, Array<Parser.Output<any>>>,
   );
 
-  console.log('concatedData', concatedData);
+  logger.info('[RSSAgent] concatedData', concatedData);
 
   return { rssData: concatedData };
 };

@@ -1,3 +1,5 @@
+import { logger } from './logger';
+
 export async function getMetar(icao: string) {
   const url = `https://api.checkwx.com/v2/metar/${icao}/decoded`;
 
@@ -8,7 +10,7 @@ export async function getMetar(icao: string) {
 
     const data = (await response.json()) as any;
 
-    console.log('metar data', data);
+    logger.info('[Utils] metar data', data);
 
     if (data.results > 0) {
       const item = data.data[0];
@@ -24,7 +26,8 @@ export async function getMetar(icao: string) {
       obsTime: null,
     };
   } catch (error) {
-    console.error(`获取数据失败: ${(error as Error).message}`);
+    logger.error(`[Utils] 获取数据失败: ${(error as Error).message}`);
+
     return { temp: null, obsTime: null };
   }
 }
@@ -39,7 +42,7 @@ export async function getTAF(icao: string) {
 
     const data = (await response.json()) as any;
 
-    console.log('metar data', data);
+    logger.info('[Utils] metar data', data);
 
     if (data.results > 0) {
       const item = data.data[0];
@@ -53,7 +56,8 @@ export async function getTAF(icao: string) {
       obsTime: null,
     };
   } catch (error) {
-    console.error(`获取数据失败: ${(error as Error).message}`);
+    logger.error(`[Utils] 获取数据失败: ${(error as Error).message}`);
+
     return { temp: null, obsTime: null };
   }
 }

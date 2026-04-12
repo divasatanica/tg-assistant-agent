@@ -4,6 +4,7 @@ import ollama from 'ollama';
 import MarkdownIt from 'markdown-it';
 import { escapeHTML } from '@krobert/utils/format';
 import { OLLAMA_MODEL_NAME } from '@krobert/utils/config';
+import { logger } from '@krobert/utils';
 
 export function wrapMarkdownMessage(message: string) {
   const htmlContentRendered = MarkdownIt().render(message);
@@ -39,16 +40,25 @@ export function registerMessageHandler(bot: Telegraf) {
     const messageId = ctx.message.message_id;
 
     if (userMessage === 'Output Debug Info in Logs') {
-      console.log('ctx.message', ctx.message, ctx.chat, bot.botInfo?.username);
+      logger.debug('[Channel] ctx.message', {
+        message: ctx.message,
+        chat: ctx.chat,
+        username: bot.botInfo?.username,
+      });
+
       return;
     }
 
     if (!userMessage.includes(`@${bot.botInfo?.username}`)) {
-      console.log('Received not mentioned userMessage', userMessage, '[skipped...]');
+      logger.debug('[Channel] Received not mentioned userMessage', {
+        userMessage,
+        status: '[skipped...]',
+      });
+
       return;
     }
 
-    console.log('Received mention userMessage', userMessage);
+    logger.info('[Channel] Received mention userMessage', { userMessage });
 
     try {
       // 调用本地运行的 Gemma 4
@@ -58,7 +68,10 @@ export function registerMessageHandler(bot: Telegraf) {
         stream: false,
       });
 
-      console.log('ollama response', response.done, response.done_reason);
+      logger.info('[Channel] ollama response', {
+        done: response.done,
+        reason: response.done_reason,
+      });
 
       await ctx.reply(wrapMarkdownMessage(response.message.content), {
         reply_parameters: {
@@ -68,7 +81,8 @@ export function registerMessageHandler(bot: Telegraf) {
         parse_mode: 'HTML',
       });
     } catch (error) {
-      console.error('Ollama Error:', error);
+      logger.error('[Channel] Ollama Error:', error);
+
       await ctx.reply('抱歉，我的大脑暂时断网了...');
     }
   });

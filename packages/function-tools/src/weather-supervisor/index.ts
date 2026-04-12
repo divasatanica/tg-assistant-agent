@@ -4,6 +4,7 @@ import { getMetar, getTAF } from '@krobert/utils/weather';
 import { bot } from '@krobert/channel/telegram/telegraf';
 import { sendMarkdownMessage } from '@krobert/channel/telegram/message';
 import { formatTime } from '@krobert/utils/format';
+import { logger } from '@krobert/utils';
 
 const SHENZHEN_ICAO = 'ZGSZ';
 const SHANGHAI_ICAO = 'ZSSS';
@@ -44,9 +45,9 @@ export async function runWeatherTask(
       message,
       Number(process.env.TG_WEATHER_THREAD_ID!),
     );
-    console.log('result', result);
+    logger.info('[Tools] result', result);
   } catch (error) {
-    console.error('[Cron] 天气任务执行失败:', error);
+    logger.error('[Cron] 天气任务执行失败:', error);
   }
 }
 

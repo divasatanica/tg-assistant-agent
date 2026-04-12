@@ -1,4 +1,6 @@
 import { sendMarkdownMessage, sendRawMessage } from '@krobert/channel/telegram/message';
+import { logger } from '@krobert/utils';
+
 import { AgentState } from '../global';
 import { bot } from '@krobert/channel/telegram/telegraf';
 import { TELEGRAM_PERSONAL_CHAT_ID } from '@krobert/utils/config';
@@ -31,11 +33,12 @@ export const reporterNode = async (state: typeof AgentState.State) => {
       Number(process.env.TG_NEWS_REPORT_THREAD_ID),
     );
 
-    console.log('Send RSS report result', result);
+    logger.info('[RSSAgent] Send RSS report result', result);
+
     return {};
   }
 
-  console.log('rssdata', state.rssData);
+  logger.info('[RSSAgent] rssdata', state.rssData);
 
   const messageSummary = formatNewList(state.rssData);
 
@@ -50,7 +53,9 @@ export const reporterNode = async (state: typeof AgentState.State) => {
           Number(process.env.TG_NEWS_REPORT_THREAD_ID),
         );
       })
-      .then((res) => console.log('Send RSS report result for category', category, res));
+      .then((res) =>
+        logger.info('[RSSAgent] Send RSS report result for category', { category, result: res }),
+      );
   }, Promise.resolve());
 
   return {}; // 只是输出，不修改状态
