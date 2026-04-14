@@ -1,5 +1,12 @@
+import { messageChannel } from '@krobert/channel/message-channel';
 import { AgentState, model } from '../global';
-import { logger, parseMessageContent } from '@krobert/utils';
+import {
+  EVENT_MESSAGE_CHANNEL_SEND_MESSAGE,
+  logger,
+  MESSAGE_CHANNEL,
+  parseMessageContent,
+  TG_MESSAGE_THREAD_ID,
+} from '@krobert/utils';
 
 export const analyzerNode = async (state: typeof AgentState.State) => {
   const isEmpty =
@@ -16,6 +23,16 @@ export const analyzerNode = async (state: typeof AgentState.State) => {
     ...(state.messages || []),
     ['user', `Here's fetched feeds organized by category as JSON format: ${context}`],
   ]);
+
+  messageChannel.emit(EVENT_MESSAGE_CHANNEL_SEND_MESSAGE, {
+    channel: MESSAGE_CHANNEL.TELEGRAM,
+    messages: [parseMessageContent(response.content)],
+    extra: {
+      tgExtra: {
+        threadId: TG_MESSAGE_THREAD_ID.NEWS_REPORT,
+      },
+    },
+  });
 
   return { finalReport: parseMessageContent(response.content) };
 };

@@ -34,6 +34,10 @@ export function sendRawMessage(
   });
 }
 
+export function editMessageText(bot: Telegraf, chatId: string, messageId: number, message: string) {
+  return bot.telegram.editMessageText(chatId, messageId, undefined, message);
+}
+
 export function registerMessageHandler(bot: Telegraf) {
   bot.on(message('text'), async (ctx) => {
     const userMessage = ctx.message.text;

@@ -1,4 +1,5 @@
 import { spawn } from 'child_process';
+import { groupBy } from 'lodash-es';
 
 export interface ExecOptions {
   cwd?: string;
@@ -86,3 +87,17 @@ export function getGoogleSearchUrl(keywords: string | string[], site: string = '
   }
   return `https://www.google.com/search?q=${encodedQuery}`;
 }
+
+/**
+ * 将列表中的 item 按照某个字段归类成对象。
+ *
+ * @param list 原始列表
+ * @param iteratee 归类的字段名或函数
+ * @returns 归类后的对象
+ */
+export function groupToRecord<T>(list: T[], iteratee: string | ((item: T) => any)) {
+  const grouped = groupBy(list, iteratee);
+  return grouped;
+}
+
+export { cloneDeep } from 'lodash-es';

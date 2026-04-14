@@ -4,35 +4,37 @@ import { readFileSync } from 'fs';
 import { AgentState } from './global';
 import { scraperNode } from './nodes/scraper';
 import { analyzerNode } from './nodes/analyzer';
-import { reporterNode } from './nodes/reporter';
 import { join } from 'path';
+import { formatTime } from '@krobert/utils';
 
 const workflow = new StateGraph(AgentState);
-const forkAfterRssFetched = ['reporter', 'analyzer'];
 workflow
   // 1. 添加节点
   .addNode('scraper', scraperNode)
   .addNode('analyzer', analyzerNode)
-  .addNode('reporter', reporterNode)
-  .addNode('final_report_sender', reporterNode)
 
   // 2. 设定连线逻辑
   .addEdge(START, 'scraper') // 从开始到抓取
-  .addConditionalEdges('scraper', () => forkAfterRssFetched)
-  // 初报发完，这条支线直接 END，不干扰分析
-  .addEdge('reporter', END)
+  .addEdge('scraper', 'analyzer')
   // 分析完后，走第二次播报
-  .addEdge('analyzer', 'final_report_sender')
-  .addEdge('final_report_sender', END);
+  .addEdge('analyzer', END);
 
 // 3. 编译成可执行的 App
 const app = workflow.compile();
 
-export async function runAgent(categories: string[]) {
-  const systemPrompt = readFileSync(join(__dirname, 'system-prompt-Role.md'), 'utf-8');
-  const myCustomSystemPrompt = new SystemMessage(systemPrompt);
+export async function runAgent(category: string) {
+  const categories = [category];
+  const systemPrompts = categories.map((category) => {
+    const systemPrompt = readFileSync(join(__dirname, `system-prompt-${category}.md`), 'utf-8');
+    return new SystemMessage(systemPrompt);
+  });
   const result = await app.invoke({
-    messages: [myCustomSystemPrompt], // 初始消息为空
+    messages: [
+      ...systemPrompts,
+      new SystemMessage(
+        `Today's date is ${formatTime(new Date(), { format: 'yyyy-MM-dd HH:mm' })}.`,
+      ),
+    ],
     categories,
   });
 

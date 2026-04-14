@@ -1,6 +1,9 @@
 import dotenv from 'dotenv';
+import { resolve } from 'path';
 
-dotenv.config();
+const envFile = process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env';
+
+dotenv.config({ path: resolve(process.cwd(), envFile), override: true });
 
 export const TG_BOT_TOKEN = process.env.TG_BOT_TOKEN!;
 export const OLLAMA_MODEL_NAME = process.env.OLLAMA_MODEL_NAME!;
@@ -9,3 +12,8 @@ export const TELEGRAM_PERSONAL_CHAT_ID = process.env.TG_PERSONAL_CHAT_ID!;
 export const GOOGLE_MODEL_NAME = process.env.GOOGLE_MODEL_NAME!;
 export const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY!;
 export const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
+
+export const TG_MESSAGE_THREAD_ID = {
+  NEWS_REPORT: process.env.TG_NEWS_REPORT_THREAD_ID!,
+  WEATHER: process.env.TG_WEATHRE_THREAD_ID!,
+};

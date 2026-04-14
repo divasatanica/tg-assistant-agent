@@ -37,12 +37,17 @@ export class RSSDatabase {
   }
 
   // 3. 添加订阅
-  addSubscription(url: string, title: string, category: string = 'General'): boolean {
+  addSubscription(
+    url: string,
+    title: string,
+    subscription_type: string,
+    category: string = 'General',
+  ): boolean {
     try {
       const stmt = this.db.prepare(
-        'INSERT INTO subscriptions (url, title, category) VALUES (?, ?, ?)',
+        'INSERT INTO subscriptions (url, title, subscription_type, category) VALUES (?, ?, ?, ?)',
       );
-      stmt.run(url, title, category);
+      stmt.run(url, title, subscription_type, category);
       return true;
     } catch (error: any) {
       if (error.message.includes('UNIQUE constraint failed')) {
