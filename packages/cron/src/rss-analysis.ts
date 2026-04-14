@@ -9,7 +9,7 @@ export function bootstrapRssAnalysisCron() {
   cron.schedule('0 0 * * *', async () => {
     logger.info('[Cron] Execution started: RSS Analysis (8 AM GMT+8)...');
     try {
-      await runAgent(['News']);
+      await runAgent('News');
       logger.info('[Cron] Execution completed: RSS Analysis');
     } catch (error) {
       logger.error('[Cron] Error executing RSS Analysis:', error);
