@@ -29,7 +29,8 @@ function formatNewList(rssData: Record<string, any[]>) {
       if (key === 'Blog') {
         output[key] += `### ${creator}\n`;
       }
-      rss.items.forEach((item: any) => {
+      const items = rss.items.slice(0, 3);
+      items.forEach((item: any) => {
         output[key] +=
           `- ${formatTime(new Date(item.pubDate), { format: 'yyyy-MM-dd HH:mm' })} [${item.title}](${item.link})\n `;
       });
