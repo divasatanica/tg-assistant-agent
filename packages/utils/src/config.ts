@@ -16,4 +16,5 @@ export const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
 export const TG_MESSAGE_THREAD_ID = {
   NEWS_REPORT: process.env.TG_NEWS_REPORT_THREAD_ID!,
   WEATHER: process.env.TG_WEATHRE_THREAD_ID!,
+  STOCK: process.env.TG_STOCK_THREAD_ID!,
 };
