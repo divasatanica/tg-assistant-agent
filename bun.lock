@@ -8,6 +8,8 @@
         "@langchain/google": "^0.1.10",
         "@modelcontextprotocol/sdk": "^1.29.0",
         "longbridge": "^4.0.5",
+        "ollama": "^0.6.3",
+        "zod": "^4.3.6",
       },
       "devDependencies": {
         "@eslint/js": "^10.0.1",
@@ -48,6 +50,7 @@
         "@krobert/agents": "*",
         "@krobert/channel": "*",
         "@krobert/cron": "*",
+        "@krobert/utils": "*",
         "dotenv": "^17.4.0",
       },
     },
@@ -69,6 +72,8 @@
       "version": "1.0.0",
       "dependencies": {
         "@krobert/agents": "*",
+        "@krobert/channel": "*",
+        "@krobert/function-tools": "*",
         "@krobert/utils": "*",
         "node-cron": "^4.2.1",
       },
@@ -80,6 +85,8 @@
       "name": "@krobert/function-tools",
       "version": "1.0.0",
       "dependencies": {
+        "@krobert/channel": "*",
+        "@krobert/utils": "*",
         "@mozilla/readability": "^0.6.0",
         "jsdom": "^29.0.2",
         "rss-parser": "^3.13.0",

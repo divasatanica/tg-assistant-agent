@@ -9,6 +9,8 @@
   },
   "types": "./dist/index.d.ts",
   "dependencies": {
+    "@krobert/channel": "*",
+    "@krobert/utils": "*",
     "@mozilla/readability": "^0.6.0",
     "jsdom": "^29.0.2",
     "rss-parser": "^3.13.0"

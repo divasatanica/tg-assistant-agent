@@ -43,6 +43,8 @@
   "dependencies": {
     "@langchain/google": "^0.1.10",
     "@modelcontextprotocol/sdk": "^1.29.0",
-    "longbridge": "^4.0.5"
+    "longbridge": "^4.0.5",
+    "ollama": "^0.6.3",
+    "zod": "^4.3.6"
   }
 }
