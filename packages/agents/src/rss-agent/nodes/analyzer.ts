@@ -5,8 +5,12 @@ import {
   logger,
   MESSAGE_CHANNEL,
   parseMessageContent,
+  RSS_ANALYZER_MAX_RETRY_TIMES,
+  RSS_ANALYZER_RETRY_BASE_DELAY_MS,
   TG_MESSAGE_THREAD_ID,
 } from '@krobert/utils';
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const analyzerNode = async (state: typeof AgentState.State) => {
   const isEmpty =
@@ -19,10 +23,43 @@ export const analyzerNode = async (state: typeof AgentState.State) => {
   logger.info('[RSSAgent] rssData retrieved, start analyzing');
 
   const context = JSON.stringify(state.rssData);
-  const response = await model.invoke([
-    ...(state.messages || []),
-    ['user', `Here's fetched feeds organized by category as JSON format: ${context}`],
-  ]);
+  const maxRetries =
+    Number.isFinite(RSS_ANALYZER_MAX_RETRY_TIMES) && RSS_ANALYZER_MAX_RETRY_TIMES >= 0
+      ? Math.floor(RSS_ANALYZER_MAX_RETRY_TIMES)
+      : 3;
+  const baseDelayMs =
+    Number.isFinite(RSS_ANALYZER_RETRY_BASE_DELAY_MS) && RSS_ANALYZER_RETRY_BASE_DELAY_MS > 0
+      ? RSS_ANALYZER_RETRY_BASE_DELAY_MS
+      : 1000;
+
+  let response: Awaited<ReturnType<typeof model.invoke>> | null = null;
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
+    try {
+      response = await model.invoke([
+        ...(state.messages || []),
+        ['user', `Here's fetched feeds organized by category as JSON format: ${context}`],
+      ]);
+      break;
+    } catch (error) {
+      lastError = error;
+      if (attempt === maxRetries) {
+        break;
+      }
+      const delayMs = baseDelayMs * 2 ** attempt;
+      logger.warn(
+        `[RSSAgent] analyzer invoke failed, retrying (${attempt + 1}/${maxRetries}) in ${delayMs}ms`,
+        { error },
+      );
+      await sleep(delayMs);
+    }
+  }
+
+  if (!response) {
+    logger.error('[RSSAgent] analyzer invoke failed after retries', { error: lastError });
+    throw lastError;
+  }
 
   messageChannel.emit(EVENT_MESSAGE_CHANNEL_SEND_MESSAGE, {
     channel: MESSAGE_CHANNEL.TELEGRAM,
