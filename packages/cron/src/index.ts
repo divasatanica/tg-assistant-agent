@@ -1,7 +1,8 @@
 import { bootstrapRssAnalysisCron } from './rss-analysis';
-import { bootstrapWeatherCron } from './weather';
+import { bootstrapSecFilingCron } from './sec-filing-analysis';
 
 export function startCron() {
   bootstrapRssAnalysisCron();
+  bootstrapSecFilingCron();
   // bootstrapWeatherCron();
 }
