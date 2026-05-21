@@ -58,6 +58,19 @@ export const analyzerNode = async (state: typeof AgentState.State) => {
 
   if (!response) {
     logger.error('[RSSAgent] analyzer invoke failed after retries', { error: lastError });
+
+    messageChannel.emit(EVENT_MESSAGE_CHANNEL_SEND_MESSAGE, {
+      channel: MESSAGE_CHANNEL.TELEGRAM,
+      messages: ['❌ RSS 分析失败：Gemini API 在重试后仍无法返回结果，请稍后重试。'],
+      extra: {
+        tgExtra: {
+          chatId: state.tgExtra?.chatId,
+          threadId: state.tgExtra?.threadId ?? TG_MESSAGE_THREAD_ID.NEWS_REPORT,
+          replyToMessageId: state.tgExtra?.replyToMessageId,
+        },
+      },
+    });
+
     throw lastError;
   }
 
@@ -66,7 +79,9 @@ export const analyzerNode = async (state: typeof AgentState.State) => {
     messages: [parseMessageContent(response.content)],
     extra: {
       tgExtra: {
-        threadId: TG_MESSAGE_THREAD_ID.NEWS_REPORT,
+        chatId: state.tgExtra?.chatId,
+        threadId: state.tgExtra?.threadId ?? TG_MESSAGE_THREAD_ID.NEWS_REPORT,
+        replyToMessageId: state.tgExtra?.replyToMessageId,
       },
     },
   });

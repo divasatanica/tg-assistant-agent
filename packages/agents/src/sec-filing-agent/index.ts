@@ -83,6 +83,7 @@ export async function runAgent(
         tgExtra: {
           chatId: options.tgExtra.chatId,
           threadId: options.tgExtra.threadId,
+          replyToMessageId: options.tgExtra.replyToMessageId,
         },
       },
     });

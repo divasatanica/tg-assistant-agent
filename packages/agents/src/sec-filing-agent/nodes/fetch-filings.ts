@@ -25,7 +25,10 @@ export const fetchFilingsNode = async (state: typeof AgentState.State) => {
 
     const cik10 = cikTo10Digits(entry.cik_str);
     try {
+      logger.debug(`[SEC Agent] Fetching filings for ${ticker} (CIK: ${cik10})...`);
       const submissions = await getSubmissions(cik10);
+
+      logger.debug(`[SEC Agent] Processing filings for ${submissions.filings}...`);
       const recent = submissions.filings.recent;
       const matched: FilingMetadata[] = [];
 

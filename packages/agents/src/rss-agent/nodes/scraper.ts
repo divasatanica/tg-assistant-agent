@@ -97,9 +97,9 @@ export const scraperNode = async (state: typeof AgentState.State) => {
   logger.debug('[RSSAgent] concatedData', concatedData);
   await sendRawMessage(
     bot,
-    TELEGRAM_PERSONAL_CHAT_ID,
+    state.tgExtra?.chatId ?? TELEGRAM_PERSONAL_CHAT_ID,
     `已抓取类别: ${categories.join(', ')}`,
-    Number(TG_MESSAGE_THREAD_ID.NEWS_REPORT),
+    state.tgExtra?.threadId ?? Number(TG_MESSAGE_THREAD_ID.NEWS_REPORT),
   );
 
   const messageSummary = formatNewList(concatedData);
@@ -111,7 +111,8 @@ export const scraperNode = async (state: typeof AgentState.State) => {
     messages,
     extra: {
       tgExtra: {
-        threadId: TG_MESSAGE_THREAD_ID.NEWS_REPORT,
+        chatId: state.tgExtra?.chatId,
+        threadId: state.tgExtra?.threadId ?? TG_MESSAGE_THREAD_ID.NEWS_REPORT,
       },
     },
   });

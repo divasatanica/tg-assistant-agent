@@ -104,6 +104,9 @@ export function registerCommandHandler(bot: Telegraf) {
 
     telegramCommandChannel.emit(EVENT_TELEGRAM_COMMAND_RSS_SUM, {
       category: match[1].trim(),
+      chatId: String(ctx.chat.id),
+      threadId: ctx.message.message_thread_id,
+      messageId: ctx.message.message_id,
     });
   });
 
@@ -125,6 +128,7 @@ export function registerCommandHandler(bot: Telegraf) {
       symbol,
       chatId: String(ctx.chat.id),
       threadId: ctx.message.message_thread_id,
+      messageId: ctx.message.message_id,
     });
   });
 }

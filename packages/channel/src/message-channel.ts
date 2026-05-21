@@ -15,11 +15,16 @@ messageChannel.on('channel:send_message', async (payload) => {
   switch (channel) {
     case 'telegram': {
       const { tgExtra = {} } = extra;
-      const { raw = false, chatId = TELEGRAM_PERSONAL_CHAT_ID, threadId = '' } = tgExtra;
+      const {
+        raw = false,
+        chatId = TELEGRAM_PERSONAL_CHAT_ID,
+        threadId = '',
+        replyToMessageId,
+      } = tgExtra;
       const sender = raw ? sendRawMessage : sendMarkdownMessage;
 
       for (const message of messages) {
-        const result = await sender(bot, chatId, message, threadId);
+        const result = await sender(bot, chatId, message, threadId, replyToMessageId);
         logger.debug('[MessageChannel] message sent result:', result);
         await sleep(1000);
       }

@@ -16,10 +16,14 @@ export function sendMarkdownMessage(
   chatId: string,
   message: string,
   messageThreadId?: number,
+  replyToMessageId?: number,
 ) {
   return bot.telegram.sendMessage(chatId, wrapMarkdownMessage(message), {
     message_thread_id: messageThreadId,
     parse_mode: 'HTML',
+    ...(replyToMessageId
+      ? { reply_parameters: { message_id: replyToMessageId, allow_sending_without_reply: true } }
+      : {}),
   });
 }
 
@@ -28,9 +32,13 @@ export function sendRawMessage(
   chatId: string,
   message: string,
   messageThreadId?: number,
+  replyToMessageId?: number,
 ) {
   return bot.telegram.sendMessage(chatId, message, {
     message_thread_id: messageThreadId,
+    ...(replyToMessageId
+      ? { reply_parameters: { message_id: replyToMessageId, allow_sending_without_reply: true } }
+      : {}),
   });
 }
 

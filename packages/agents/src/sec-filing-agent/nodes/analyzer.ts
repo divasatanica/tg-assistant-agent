@@ -54,6 +54,19 @@ export const analyzerNode = async (state: typeof AgentState.State) => {
 
   if (!response) {
     logger.error('[SEC Agent] Analyzer invoke failed after retries', { error: lastError });
+
+    messageChannel.emit(EVENT_MESSAGE_CHANNEL_SEND_MESSAGE, {
+      channel: MESSAGE_CHANNEL.TELEGRAM,
+      messages: ['❌ SEC 分析失败：Gemini API 在 3 次重试后仍无法返回结果，请稍后重试。'],
+      extra: {
+        tgExtra: {
+          chatId: state.tgExtra?.chatId,
+          threadId: state.tgExtra?.threadId ?? Number(TG_MESSAGE_THREAD_ID.SEC_FILING),
+          replyToMessageId: state.tgExtra?.replyToMessageId,
+        },
+      },
+    });
+
     throw lastError;
   }
 
@@ -67,6 +80,7 @@ export const analyzerNode = async (state: typeof AgentState.State) => {
       tgExtra: {
         chatId: state.tgExtra?.chatId,
         threadId: state.tgExtra?.threadId ?? Number(TG_MESSAGE_THREAD_ID.SEC_FILING),
+        replyToMessageId: state.tgExtra?.replyToMessageId,
       },
     },
   });

@@ -1,7 +1,7 @@
 import { StateGraph, START, END } from '@langchain/langgraph';
 import { SystemMessage } from '@langchain/core/messages';
 import { readFileSync } from 'fs';
-import { AgentState } from './global';
+import { AgentState, TelegramMessageTarget } from './global';
 import { scraperNode } from './nodes/scraper';
 import { analyzerNode } from './nodes/analyzer';
 import { join } from 'path';
@@ -22,7 +22,7 @@ workflow
 // 3. 编译成可执行的 App
 const app = workflow.compile();
 
-export async function runAgent(category: string) {
+export async function runAgent(category: string, tgExtra?: TelegramMessageTarget) {
   const categories = [category];
   const systemPrompts = categories.map((category) => {
     const systemPrompt = readFileSync(join(__dirname, `system-prompt-${category}.md`), 'utf-8');
@@ -36,6 +36,7 @@ export async function runAgent(category: string) {
       ),
     ],
     categories,
+    tgExtra,
   });
 
   return {

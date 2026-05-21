@@ -23,6 +23,7 @@ export type { XbrlMetrics } from './xbrl-extractor';
 export interface TelegramMessageTarget {
   chatId?: string;
   threadId?: number;
+  replyToMessageId?: number;
 }
 
 export const AgentState = Annotation.Root({

@@ -6,6 +6,12 @@ import { googleModelFactory } from '../common/model';
 
 export const model = googleModelFactory();
 
+export interface TelegramMessageTarget {
+  chatId?: string;
+  threadId?: number;
+  replyToMessageId?: number;
+}
+
 // 定义全局状态架构
 export const AgentState = Annotation.Root({
   // 存储对话消息流
@@ -18,4 +24,6 @@ export const AgentState = Annotation.Root({
   finalReport: Annotation<string>(),
   // 初始注入的要分析的订阅类目
   categories: Annotation<string[]>(),
+  // Telegram 消息目标信息（chatId、threadId、replyToMessageId），cron 触发时为 undefined
+  tgExtra: Annotation<TelegramMessageTarget | undefined>(),
 });
