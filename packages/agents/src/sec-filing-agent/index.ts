@@ -76,6 +76,11 @@ export async function runAgent(
   if (!hasFilings && options.tgExtra) {
     const noFilingsMsg = `⚠️ 未找到 ${tickers.join(', ')} 可分析的 SEC 文件。`;
     logger.info(`[SEC Agent] No filings found for ${tickers.join(', ')}, sending notification`);
+
+    logger.debug('[SEC Agent] Emitting no filings message to Telegram channel', {
+      threadId: options.tgExtra.threadId,
+      chatId: options.tgExtra.chatId,
+    });
     messageChannel.emit(EVENT_MESSAGE_CHANNEL_SEND_MESSAGE, {
       channel: MESSAGE_CHANNEL.TELEGRAM,
       messages: [noFilingsMsg],

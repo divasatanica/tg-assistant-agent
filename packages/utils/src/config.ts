@@ -18,9 +18,9 @@ export const RSS_ANALYZER_RETRY_BASE_DELAY_MS = Number(
   process.env.RSS_ANALYZER_RETRY_BASE_DELAY_MS || 2000,
 );
 
-export const TG_MESSAGE_THREAD_ID: Record<string, string> = {
+export const TG_MESSAGE_THREAD_ID = {
   NEWS_REPORT: process.env.TG_NEWS_REPORT_THREAD_ID!,
   WEATHER: process.env.TG_WEATHRE_THREAD_ID!,
   STOCK: process.env.TG_STOCK_THREAD_ID!,
   SEC_FILING: process.env.TG_SEC_FILING_THREAD_ID!,
-};
+} as const;

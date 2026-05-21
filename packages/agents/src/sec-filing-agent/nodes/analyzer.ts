@@ -55,6 +55,11 @@ export const analyzerNode = async (state: typeof AgentState.State) => {
   if (!response) {
     logger.error('[SEC Agent] Analyzer invoke failed after retries', { error: lastError });
 
+    logger.debug('[SEC Agent] Emitting failure message to Telegram channel', {
+      threadId: state.tgExtra?.threadId,
+      chatId: state.tgExtra?.chatId,
+    });
+
     messageChannel.emit(EVENT_MESSAGE_CHANNEL_SEND_MESSAGE, {
       channel: MESSAGE_CHANNEL.TELEGRAM,
       messages: ['❌ SEC 分析失败：Gemini API 在 3 次重试后仍无法返回结果，请稍后重试。'],
