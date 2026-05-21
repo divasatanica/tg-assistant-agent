@@ -1,5 +1,5 @@
 import cron from 'node-cron';
-import { runAgent } from '@krobert/agents/rss-agent/index';
+import { runRssAgent } from '@krobert/agents';
 import { logger } from '@krobert/utils';
 
 export function bootstrapRssAnalysisCron() {
@@ -11,7 +11,7 @@ export function bootstrapRssAnalysisCron() {
     async () => {
       logger.info('[Cron] Execution started: RSS Analysis (00:12 UTC)...');
       try {
-        await runAgent('News');
+        await runRssAgent('News');
         logger.info('[Cron] Execution completed: RSS Analysis');
       } catch (error) {
         logger.error('[Cron] Error executing RSS Analysis:', error);

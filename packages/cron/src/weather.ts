@@ -3,7 +3,7 @@ import { sleep } from '@krobert/utils/common';
 import { logger } from '@krobert/utils';
 
 import { ICAO_LIST, runWeatherTask } from '@krobert/function-tools/weather-supervisor';
-import { runAgent } from '@krobert/agents/weather-agent/index';
+import { runWeatherAgent } from '@krobert/agents';
 
 /**
  * 判断当前分钟是否处于“高频采样区”
@@ -71,7 +71,7 @@ export function bootstrapWeatherCron() {
     ICAO_LIST.reduce((acc, curr) => {
       return acc
         .then(() => {
-          return runAgent(curr.city, curr.code);
+          return runWeatherAgent(curr.city, curr.code);
         })
         .then(() => {
           return sleep(3000) as Promise<void>;

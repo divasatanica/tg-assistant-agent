@@ -1,5 +1,5 @@
 import cron from 'node-cron';
-import { runAgent } from '@krobert/agents/sec-filing-agent/index';
+import { runSecFilingAgent } from '@krobert/agents';
 import { logger } from '@krobert/utils';
 
 const WATCHLIST_TICKERS = (process.env.SEC_WATCHLIST_TICKERS ?? '')
@@ -20,7 +20,7 @@ export function bootstrapSecFilingCron() {
     async () => {
       logger.info(`[Cron] SEC Filing Analysis started for: ${WATCHLIST_TICKERS.join(', ')}`);
       try {
-        await runAgent(WATCHLIST_TICKERS, ['10-K', '10-Q', '8-K'], 1);
+        await runSecFilingAgent(WATCHLIST_TICKERS, ['10-K', '10-Q', '8-K'], 1);
         logger.info('[Cron] SEC Filing Analysis completed');
       } catch (error) {
         logger.error('[Cron] SEC Filing Analysis failed:', error);

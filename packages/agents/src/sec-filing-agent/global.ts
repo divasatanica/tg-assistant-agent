@@ -20,6 +20,11 @@ export interface FilingMetadata {
 export type { ParsedSection } from './filing-parser';
 export type { XbrlMetrics } from './xbrl-extractor';
 
+export interface TelegramMessageTarget {
+  chatId?: string;
+  threadId?: number;
+}
+
 export const AgentState = Annotation.Root({
   messages: Annotation<BaseMessage[]>({
     reducer: (x, y) => x.concat(y),
@@ -28,5 +33,6 @@ export const AgentState = Annotation.Root({
   filings: Annotation<Record<string, FilingMetadata[]>>(),
   sections: Annotation<Record<string, ParsedSection[]>>(),
   xbrlMetrics: Annotation<Record<string, XbrlMetrics[]>>(),
+  tgExtra: Annotation<TelegramMessageTarget | undefined>(),
   finalReport: Annotation<string>(),
 });

@@ -1,6 +1,7 @@
 import { Telegraf, Markup } from 'telegraf';
 import { rssDB } from '@krobert/utils/sqlite/sqlite';
-import { runAgent } from '@krobert/agents/rss-agent/index';
+import { EVENT_TELEGRAM_COMMAND_RSS_SUM, EVENT_TELEGRAM_COMMAND_SEC } from '@krobert/utils';
+import { telegramCommandChannel } from './command-channel';
 
 // 临时存储待选类别的订阅信息 (避免 callback_data 长度超过 64 bytes)
 const pendingSubs = new Map<
@@ -101,8 +102,29 @@ export function registerCommandHandler(bot: Telegraf) {
       return ctx.reply('❌ 用法: /rsssum 类别');
     }
 
-    const categories = match[1].trim();
+    telegramCommandChannel.emit(EVENT_TELEGRAM_COMMAND_RSS_SUM, {
+      category: match[1].trim(),
+    });
+  });
 
-    runAgent(categories);
+  bot.command('sec', (ctx) => {
+    const text = ctx.message.text;
+    const match = text.match(/^\/sec(?:@\S+)?\s+(\S+)$/);
+
+    if (!match) {
+      return ctx.reply('❌ 用法: /sec <symbol>');
+    }
+
+    const symbol = match[1].replace(/^\$/, '').trim().toUpperCase();
+
+    if (!symbol) {
+      return ctx.reply('❌ symbol 不能为空');
+    }
+
+    telegramCommandChannel.emit(EVENT_TELEGRAM_COMMAND_SEC, {
+      symbol,
+      chatId: String(ctx.chat.id),
+      threadId: ctx.message.message_thread_id,
+    });
   });
 }

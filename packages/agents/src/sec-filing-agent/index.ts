@@ -2,12 +2,19 @@ import { StateGraph, START, END } from '@langchain/langgraph';
 import { SystemMessage } from '@langchain/core/messages';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { formatTime } from '@krobert/utils';
+import {
+  formatTime,
+  EVENT_MESSAGE_CHANNEL_SEND_MESSAGE,
+  MESSAGE_CHANNEL,
+  logger,
+} from '@krobert/utils';
+import { messageChannel } from '@krobert/channel/message-channel';
 import { AgentState } from './global';
 import { fetchFilingsNode } from './nodes/fetch-filings';
 import { extractSectionsNode } from './nodes/extract-sections';
 import { fetchXbrlNode } from './nodes/fetch-xbrl';
 import { analyzerNode } from './nodes/analyzer';
+import type { TelegramMessageTarget } from './global';
 
 function hasFilings(state: typeof AgentState.State): string {
   const totalFilings = Object.values(state.filings ?? {}).flat().length;
@@ -31,10 +38,15 @@ const workflow = new StateGraph(AgentState)
 
 const app = workflow.compile();
 
+interface RunSecFilingAgentOptions {
+  tgExtra?: TelegramMessageTarget;
+}
+
 export async function runAgent(
   tickers: string[],
   formTypes: string[] = ['10-K'],
-  maxFilingsPerTicker: number = 1,
+  maxFilingsPerTicker: number = 50,
+  options: RunSecFilingAgentOptions = {},
 ) {
   const systemPromptPath = join(import.meta.dirname, 'system-prompt-extraction.md');
   let systemPrompt: string;
@@ -55,7 +67,26 @@ export async function runAgent(
     tickers,
     _formTypes: formTypes,
     _maxFilingsPerTicker: maxFilingsPerTicker,
+    tgExtra: options.tgExtra,
   } as Record<string, unknown>);
+
+  // 如果没有找到任何文件且指定了 tgExtra，则在 Agent 自身内部发送通知消息
+  const hasFilings =
+    Object.values((result.filings ?? {}) as Record<string, unknown[]>).flat().length > 0;
+  if (!hasFilings && options.tgExtra) {
+    const noFilingsMsg = `⚠️ 未找到 ${tickers.join(', ')} 可分析的 SEC 文件。`;
+    logger.info(`[SEC Agent] No filings found for ${tickers.join(', ')}, sending notification`);
+    messageChannel.emit(EVENT_MESSAGE_CHANNEL_SEND_MESSAGE, {
+      channel: MESSAGE_CHANNEL.TELEGRAM,
+      messages: [noFilingsMsg],
+      extra: {
+        tgExtra: {
+          chatId: options.tgExtra.chatId,
+          threadId: options.tgExtra.threadId,
+        },
+      },
+    });
+  }
 
   return {
     finalReport: result.finalReport,

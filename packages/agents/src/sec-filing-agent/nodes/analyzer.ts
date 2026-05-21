@@ -65,7 +65,8 @@ export const analyzerNode = async (state: typeof AgentState.State) => {
     messages: [finalReport],
     extra: {
       tgExtra: {
-        threadId: TG_MESSAGE_THREAD_ID.SEC_FILING,
+        chatId: state.tgExtra?.chatId,
+        threadId: state.tgExtra?.threadId ?? Number(TG_MESSAGE_THREAD_ID.SEC_FILING),
       },
     },
   });

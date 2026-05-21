@@ -1,8 +1,13 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "Bundler",
+    "ignoreDeprecations": "6.0",
+    "paths": {
+      "@krobert/agents": ["packages/agents"]
+    },
     "lib": [
       "ES2022"
     ],
