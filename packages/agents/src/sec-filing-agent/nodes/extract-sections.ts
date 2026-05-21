@@ -11,7 +11,11 @@ export const extractSectionsNode = async (state: typeof AgentState.State) => {
 
     for (const filing of filingList) {
       try {
-        const html = await fetchFilingHtml(parseInt(filing.cik, 10), filing.accessionNumber);
+        const html = await fetchFilingHtml(
+          parseInt(filing.cik, 10),
+          filing.accessionNumber,
+          filing.primaryDocument,
+        );
         const parsed = parseFilingHtml(html, filing.formType);
         parsed.forEach((s) => {
           tickerSections.push({

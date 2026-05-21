@@ -3,8 +3,9 @@ import { Annotation } from '@langchain/langgraph';
 import { googleModelFactory } from '../common/model';
 import type { ParsedSection } from './filing-parser';
 import type { XbrlMetrics } from './xbrl-extractor';
+import { GOOGLE_MODEL_NAME_MAP } from 'packages/utils/src/config';
 
-export const model = googleModelFactory();
+export const model = googleModelFactory(GOOGLE_MODEL_NAME_MAP.SEC_ANALYSIS);
 
 export interface FilingMetadata {
   ticker: string;
@@ -31,6 +32,8 @@ export const AgentState = Annotation.Root({
     reducer: (x, y) => x.concat(y),
   }),
   tickers: Annotation<string[]>(),
+  formTypes: Annotation<string[]>(),
+  maxFilingsPerTicker: Annotation<number>(),
   filings: Annotation<Record<string, FilingMetadata[]>>(),
   sections: Annotation<Record<string, ParsedSection[]>>(),
   xbrlMetrics: Annotation<Record<string, XbrlMetrics[]>>(),

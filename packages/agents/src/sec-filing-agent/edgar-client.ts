@@ -3,29 +3,80 @@ import { logger, SEC_USER_AGENT } from '@krobert/utils';
 const SEC_BASE = 'https://www.sec.gov';
 const SEC_DATA = 'https://data.sec.gov';
 
-let lastRequestTime = 0;
+// Per-domain rate limits. data.sec.gov tolerates ~10 req/s, but
+// www.sec.gov /Archives aggressively throttles and needs more spacing.
+const DOMAIN_MIN_INTERVAL: Record<string, number> = {
+  'data.sec.gov': 200,
+  'www.sec.gov': 600,
+};
+const DEFAULT_MIN_INTERVAL = 400;
 
-async function rateLimitedFetch(url: string, accept = 'application/json'): Promise<Response> {
+const MAX_RETRIES = 3;
+const RETRY_BASE_DELAY_MS = 2000;
+
+// ── Per-domain rate limiter ──────────────────────────────────────────
+
+const lastRequestTime: Record<string, number> = {};
+
+function getDomain(url: string): string {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return 'www.sec.gov';
+  }
+}
+
+async function throttle(domain: string): Promise<void> {
+  const minInterval = DOMAIN_MIN_INTERVAL[domain] ?? DEFAULT_MIN_INTERVAL;
+  const last = lastRequestTime[domain] ?? 0;
   const now = Date.now();
-  const elapsed = now - lastRequestTime;
-  if (elapsed < 200) {
-    await new Promise((r) => setTimeout(r, 200 - elapsed));
+  const elapsed = now - last;
+  if (elapsed < minInterval) {
+    await new Promise((r) => setTimeout(r, minInterval - elapsed));
   }
-  lastRequestTime = Date.now();
+  lastRequestTime[domain] = Date.now();
+}
 
-  const response = await fetch(url, {
-    headers: {
-      'User-Agent': SEC_USER_AGENT,
-      Accept: accept,
-    },
-  });
+// ── Fetch with retry + backoff ───────────────────────────────────────
 
-  if (!response.ok) {
-    const body = await response.text().catch(() => '[unreadable]');
-    throw new Error(`SEC API ${response.status} for ${url}: ${body.slice(0, 300)}`);
+async function rateLimitedFetch(
+  url: string,
+  accept = 'application/json',
+  retries = MAX_RETRIES,
+): Promise<Response> {
+  const domain = getDomain(url);
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    await throttle(domain);
+
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': SEC_USER_AGENT,
+        Accept: accept,
+      },
+    });
+
+    // 429 / 503 are transient server-side throttling — retry with backoff
+    if ((response.status === 429 || response.status === 503) && attempt < retries) {
+      const retryAfter = response.headers.get('Retry-After');
+      const delayMs = retryAfter ? Number(retryAfter) * 1000 : RETRY_BASE_DELAY_MS * 2 ** attempt;
+
+      logger.warn(
+        `[EdgarClient] ${response.status} for ${url}, retrying (${attempt + 1}/${retries}) in ${delayMs}ms`,
+      );
+      await new Promise((r) => setTimeout(r, delayMs));
+      continue;
+    }
+
+    if (!response.ok) {
+      const body = await response.text().catch(() => '[unreadable]');
+      throw new Error(`SEC API ${response.status} for ${url}: ${body.slice(0, 300)}`);
+    }
+
+    return response;
   }
 
-  return response;
+  throw new Error(`SEC API exhausted ${retries} retries for ${url}`);
 }
 
 // ── Ticker → CIK mapping ────────────────────────────────────────────
@@ -84,33 +135,106 @@ export interface SubmissionsResponse {
 }
 
 export async function getSubmissions(cik10: string): Promise<SubmissionsResponse> {
-  logger.debug(
-    `[EdgarClient] Fetching submissions for CIK ${SEC_DATA}/submissions/CIK${cik10}.json...`,
-  );
+  logger.debug(`[EdgarClient] Fetching submissions for CIK ${cik10}...`);
   const res = await rateLimitedFetch(`${SEC_DATA}/submissions/CIK${cik10}.json`);
   return (await res.json()) as SubmissionsResponse;
 }
 
 // ── Filing document HTML ────────────────────────────────────────────
 
-export async function fetchFilingHtml(cik: number, accessionNumber: string): Promise<string> {
-  const accNoHyphenless = accessionNumber.replace(/-/g, '');
+interface FilingDirectoryItem {
+  name: string;
+  href?: string;
+  size?: number | string;
+  last_modified?: string;
+  type?: string;
+}
 
-  // First, fetch the index page to find the actual document URL
-  const indexUrl = `${SEC_BASE}/Archives/edgar/data/${cik}/${accNoHyphenless}/${accNoHyphenless}-index.htm`;
-  const indexHtml = await rateLimitedFetch(indexUrl, 'text/html').then((r) => r.text());
+interface FilingDirectoryIndexResponse {
+  directory: {
+    name: string;
+    item: FilingDirectoryItem[];
+  };
+}
 
-  // Extract the primary document href from the index page
-  const docMatch = indexHtml.match(/href="([^"]+\.(?:htm|html))"/i);
-  if (!docMatch) {
-    throw new Error(`Could not find document link in filing index: ${indexUrl}`);
+export interface FilingArchiveUrls {
+  filingDirectoryUrl: string;
+  filingDirectoryIndexJsonUrl: string;
+  filingDirectoryIndexXmlUrl: string;
+  filingDirectoryIndexHtmlUrl: string;
+  filingIndexHtmlUrl: string;
+  filingIndexHtmUrl: string;
+  filingTextUrl: string;
+  primaryDocumentUrl?: string;
+  inlineViewerUrl?: string;
+}
+
+export function buildFilingArchiveUrls(
+  cik: number | string,
+  accessionNumber: string,
+  primaryDocument?: string,
+): FilingArchiveUrls {
+  const cikNumeric = String(Number(cik));
+  const accessionDashed = accessionNumber;
+  const accessionCompact = accessionDashed.replace(/-/g, '');
+  const filingDirectoryUrl = `${SEC_BASE}/Archives/edgar/data/${cikNumeric}/${accessionCompact}`;
+  const primaryDocumentUrl = primaryDocument
+    ? `${filingDirectoryUrl}/${primaryDocument}`
+    : undefined;
+
+  return {
+    filingDirectoryUrl,
+    filingDirectoryIndexJsonUrl: `${filingDirectoryUrl}/index.json`,
+    filingDirectoryIndexXmlUrl: `${filingDirectoryUrl}/index.xml`,
+    filingDirectoryIndexHtmlUrl: `${filingDirectoryUrl}/index.html`,
+    filingIndexHtmlUrl: `${filingDirectoryUrl}/${accessionDashed}-index.html`,
+    filingIndexHtmUrl: `${filingDirectoryUrl}/${accessionDashed}-index.htm`,
+    filingTextUrl: `${SEC_BASE}/Archives/edgar/data/${cikNumeric}/${accessionDashed}.txt`,
+    primaryDocumentUrl,
+    inlineViewerUrl: primaryDocumentUrl
+      ? `${SEC_BASE}/ix?doc=${primaryDocumentUrl.replace(SEC_BASE, '')}`
+      : undefined,
+  };
+}
+
+async function fetchFilingDirectoryIndex(
+  cik: number | string,
+  accessionNumber: string,
+): Promise<FilingDirectoryIndexResponse> {
+  const { filingDirectoryIndexJsonUrl } = buildFilingArchiveUrls(cik, accessionNumber);
+  const res = await rateLimitedFetch(filingDirectoryIndexJsonUrl);
+  return (await res.json()) as FilingDirectoryIndexResponse;
+}
+
+export async function fetchFilingHtml(
+  cik: number,
+  accessionNumber: string,
+  primaryDocument?: string,
+): Promise<string> {
+  const archiveUrls = buildFilingArchiveUrls(cik, accessionNumber, primaryDocument);
+
+  if (archiveUrls.primaryDocumentUrl) {
+    return await rateLimitedFetch(archiveUrls.primaryDocumentUrl, 'text/html').then((r) =>
+      r.text(),
+    );
   }
 
-  const docPath = docMatch[1];
-  const docUrl = `${SEC_BASE}/Archives/edgar/data/${cik}/${accNoHyphenless}/${docPath}`;
-  const docHtml = await rateLimitedFetch(docUrl, 'text/html').then((r) => r.text());
+  const directoryIndex = await fetchFilingDirectoryIndex(cik, accessionNumber);
+  const items = directoryIndex.directory?.item ?? [];
+  const candidate = items.find(
+    (item) => /\.(htm|html)$/i.test(item.name) && !/index/i.test(item.name),
+  );
 
-  return docHtml;
+  if (!candidate) {
+    const { filingDirectoryIndexJsonUrl } = archiveUrls;
+    throw new Error(
+      `Could not find primary HTML document in filing directory index: ${filingDirectoryIndexJsonUrl}`,
+    );
+  }
+
+  const { filingDirectoryUrl } = archiveUrls;
+  const docUrl = `${filingDirectoryUrl}/${candidate.name}`;
+  return await rateLimitedFetch(docUrl, 'text/html').then((r) => r.text());
 }
 
 // ── XBRL Company Facts ──────────────────────────────────────────────
@@ -131,9 +255,9 @@ export interface XbrlCompanyFacts {
   cik: string;
   entityName: string;
   facts: Record<
-    string, // namespace: "us-gaap", "dei", etc.
+    string,
     Record<
-      string, // concept name: "Assets", "Revenues", etc.
+      string,
       {
         label: string;
         description: string;

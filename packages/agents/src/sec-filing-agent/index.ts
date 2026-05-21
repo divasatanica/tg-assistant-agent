@@ -57,6 +57,13 @@ export async function runAgent(
       'You are a financial analyst. Analyze the provided SEC filing data and produce a structured report.';
   }
 
+  logger.debug('[SEC Agent] Starting agent with parameters', {
+    tickers,
+    formTypes,
+    maxFilingsPerTicker,
+    tgExtra: options.tgExtra,
+  });
+
   const result = await app.invoke({
     messages: [
       new SystemMessage(systemPrompt),
@@ -65,10 +72,10 @@ export async function runAgent(
       ),
     ],
     tickers,
-    _formTypes: formTypes,
-    _maxFilingsPerTicker: maxFilingsPerTicker,
+    formTypes,
+    maxFilingsPerTicker,
     tgExtra: options.tgExtra,
-  } as Record<string, unknown>);
+  });
 
   // 如果没有找到任何文件且指定了 tgExtra，则在 Agent 自身内部发送通知消息
   const hasFilings =

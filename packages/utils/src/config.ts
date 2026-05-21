@@ -10,13 +10,19 @@ export const OLLAMA_MODEL_NAME = process.env.OLLAMA_MODEL_NAME!;
 export const SQLITE_DB_PATH = process.env.SQLITE_DB_PATH!;
 export const TELEGRAM_PERSONAL_CHAT_ID = process.env.TG_PERSONAL_CHAT_ID!;
 export const GOOGLE_MODEL_NAME = process.env.GOOGLE_MODEL_NAME!;
+export const GOOGLE_SEC_MODEL_NAME = process.env.GOOGLE_SEC_MODEL_NAME!;
 export const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY!;
 export const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
-export const SEC_USER_AGENT = process.env.SEC_USER_AGENT || 'my-tg-agent/1.0';
+export const SEC_USER_AGENT = process.env.SEC_USER_AGENT || 'my-tg-agent/1.0 (contact@example.com)';
 export const RSS_ANALYZER_MAX_RETRY_TIMES = Number(process.env.RSS_ANALYZER_MAX_RETRY_TIMES || 3);
 export const RSS_ANALYZER_RETRY_BASE_DELAY_MS = Number(
   process.env.RSS_ANALYZER_RETRY_BASE_DELAY_MS || 2000,
 );
+
+export const GOOGLE_MODEL_NAME_MAP = {
+  GENERAL: GOOGLE_MODEL_NAME,
+  SEC_ANALYSIS: GOOGLE_SEC_MODEL_NAME,
+};
 
 export const TG_MESSAGE_THREAD_ID = {
   NEWS_REPORT: process.env.TG_NEWS_REPORT_THREAD_ID!,
