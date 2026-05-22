@@ -2,13 +2,8 @@ import { StateGraph, START, END } from '@langchain/langgraph';
 import { SystemMessage } from '@langchain/core/messages';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import {
-  formatTime,
-  EVENT_MESSAGE_CHANNEL_SEND_MESSAGE,
-  MESSAGE_CHANNEL,
-  logger,
-} from '@krobert/utils';
-import { messageChannel } from '@krobert/channel/message-channel';
+import { formatTime, logger } from '@krobert/utils';
+import { eventBus, EVENT_CHANNEL_SEND_MESSAGE } from '@krobert/events';
 import { AgentState } from './global';
 import { fetchFilingsNode } from './nodes/fetch-filings';
 import { extractSectionsNode } from './nodes/extract-sections';
@@ -88,8 +83,8 @@ export async function runAgent(
       threadId: options.tgExtra.threadId,
       chatId: options.tgExtra.chatId,
     });
-    messageChannel.emit(EVENT_MESSAGE_CHANNEL_SEND_MESSAGE, {
-      channel: MESSAGE_CHANNEL.TELEGRAM,
+    eventBus.emit(EVENT_CHANNEL_SEND_MESSAGE, {
+      channel: options.tgExtra.channel || 'telegram',
       messages: [noFilingsMsg],
       extra: {
         tgExtra: {

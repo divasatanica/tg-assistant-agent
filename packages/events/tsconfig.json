@@ -4,9 +4,5 @@
     "outDir": "./dist",
     "rootDir": "./src"
   },
-  "include": ["src/**/*"],
-  "references": [
-    { "path": "../utils" },
-    { "path": "../events" }
-  ]
+  "include": ["src/**/*"]
 }

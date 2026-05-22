@@ -10,6 +10,7 @@ export interface TelegramMessageTarget {
   chatId?: string;
   threadId?: number;
   replyToMessageId?: number;
+  channel?: string;
 }
 
 // 定义全局状态架构

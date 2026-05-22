@@ -1,20 +1,15 @@
 import { rssDB } from '@krobert/utils/sqlite/sqlite';
 import {
-  EVENT_MESSAGE_CHANNEL_SEND_MESSAGE,
   formatTime,
   logger,
-  MESSAGE_CHANNEL,
   TELEGRAM_PERSONAL_CHAT_ID,
   TG_MESSAGE_THREAD_ID,
 } from '@krobert/utils';
-import { messageChannel } from '@krobert/channel/message-channel';
+import { eventBus, EVENT_CHANNEL_SEND_MESSAGE } from '@krobert/events';
 
 import { AgentState } from '../global';
 import { fetchAndParseRSS, resolveRssFeed } from '@krobert/function-tools/rss-feed';
 import Parser from 'rss-parser';
-
-import { sendRawMessage } from '@krobert/channel/telegram/message';
-import { bot } from '@krobert/channel/telegram/telegraf';
 
 function formatNewList(rssData: Record<string, any[]>) {
   const output = {} as Record<string, string>;
@@ -94,20 +89,24 @@ export const scraperNode = async (state: typeof AgentState.State) => {
     {} as Record<string, Array<Parser.Output<any>>>,
   );
 
-  logger.debug('[RSSAgent] concatedData', concatedData);
-  await sendRawMessage(
-    bot,
-    state.tgExtra?.chatId ?? TELEGRAM_PERSONAL_CHAT_ID,
-    `已抓取类别: ${categories.join(', ')}`,
-    state.tgExtra?.threadId ?? Number(TG_MESSAGE_THREAD_ID.NEWS_REPORT),
-  );
+  // logger.debug('[RSSAgent] concatedData', concatedData);
+  eventBus.emit(EVENT_CHANNEL_SEND_MESSAGE, {
+    channel: state.tgExtra?.channel || 'telegram',
+    messages: [`已抓取类别: ${categories.join(', ')}`],
+    extra: {
+      tgExtra: {
+        chatId: state.tgExtra?.chatId ?? TELEGRAM_PERSONAL_CHAT_ID,
+        threadId: state.tgExtra?.threadId ?? Number(TG_MESSAGE_THREAD_ID.NEWS_REPORT),
+      },
+    },
+  });
 
   const messageSummary = formatNewList(concatedData);
   logger.debug('[RSSAgent] messageSummary', messageSummary);
   const messages = Object.keys(messageSummary).map((key) => messageSummary[key]);
 
-  messageChannel.emit(EVENT_MESSAGE_CHANNEL_SEND_MESSAGE, {
-    channel: MESSAGE_CHANNEL.TELEGRAM,
+  eventBus.emit(EVENT_CHANNEL_SEND_MESSAGE, {
+    channel: state.tgExtra?.channel || 'telegram',
     messages,
     extra: {
       tgExtra: {

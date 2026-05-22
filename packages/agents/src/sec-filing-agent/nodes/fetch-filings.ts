@@ -1,5 +1,5 @@
-import { EVENT_MESSAGE_CHANNEL_SEND_MESSAGE, MESSAGE_CHANNEL, logger } from '@krobert/utils';
-import { messageChannel } from '@krobert/channel/message-channel';
+import { logger } from '@krobert/utils';
+import { eventBus, EVENT_CHANNEL_SEND_MESSAGE } from '@krobert/events';
 import { AgentState, FilingMetadata } from '../global';
 import {
   buildFilingArchiveUrls,
@@ -136,8 +136,8 @@ export const fetchFilingsNode = async (state: typeof AgentState.State) => {
   }
 
   if (allUrls.length > 0 && state.tgExtra) {
-    messageChannel.emit(EVENT_MESSAGE_CHANNEL_SEND_MESSAGE, {
-      channel: MESSAGE_CHANNEL.TELEGRAM,
+    eventBus.emit(EVENT_CHANNEL_SEND_MESSAGE, {
+      channel: 'telegram',
       messages: allUrls,
       extra: {
         tgExtra: {

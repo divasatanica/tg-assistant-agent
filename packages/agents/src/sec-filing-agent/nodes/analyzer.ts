@@ -1,11 +1,5 @@
-import { messageChannel } from '@krobert/channel/message-channel';
-import {
-  EVENT_MESSAGE_CHANNEL_SEND_MESSAGE,
-  logger,
-  MESSAGE_CHANNEL,
-  parseMessageContent,
-  TG_MESSAGE_THREAD_ID,
-} from '@krobert/utils';
+import { eventBus, EVENT_CHANNEL_SEND_MESSAGE } from '@krobert/events';
+import { logger, parseMessageContent, TG_MESSAGE_THREAD_ID } from '@krobert/utils';
 import { model } from '../global';
 import type { AgentState } from '../global';
 
@@ -60,8 +54,8 @@ export const analyzerNode = async (state: typeof AgentState.State) => {
       chatId: state.tgExtra?.chatId,
     });
 
-    messageChannel.emit(EVENT_MESSAGE_CHANNEL_SEND_MESSAGE, {
-      channel: MESSAGE_CHANNEL.TELEGRAM,
+    eventBus.emit(EVENT_CHANNEL_SEND_MESSAGE, {
+      channel: state.tgExtra?.channel || 'telegram',
       messages: ['❌ SEC 分析失败：Gemini API 在 3 次重试后仍无法返回结果，请稍后重试。'],
       extra: {
         tgExtra: {
@@ -78,8 +72,8 @@ export const analyzerNode = async (state: typeof AgentState.State) => {
   const finalReport = parseMessageContent(response.content);
   logger.info(`[SEC Agent] Analysis complete, ${finalReport.length} chars`);
 
-  messageChannel.emit(EVENT_MESSAGE_CHANNEL_SEND_MESSAGE, {
-    channel: MESSAGE_CHANNEL.TELEGRAM,
+  eventBus.emit(EVENT_CHANNEL_SEND_MESSAGE, {
+    channel: state.tgExtra?.channel || 'telegram',
     messages: [finalReport],
     extra: {
       tgExtra: {

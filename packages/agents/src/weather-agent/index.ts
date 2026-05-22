@@ -2,8 +2,7 @@ import { StateGraph, START, END } from '@langchain/langgraph';
 import { AgentState } from './global';
 import { informationGatheringNode } from './nodes/informationGathering';
 import { toolNode } from './nodes/tools';
-import { sendMarkdownMessage } from '@krobert/channel/telegram/message';
-import { bot } from '@krobert/channel/telegram/telegraf';
+import { eventBus, EVENT_CHANNEL_SEND_MESSAGE } from '@krobert/events';
 import { logger, parseMessageContent } from '@krobert/utils';
 
 function shouldContinue(state: typeof AgentState.State) {
@@ -34,14 +33,18 @@ export async function runAgent(city: string, icao: string) {
 
   const lastMessage = result.messages[result.messages.length - 1];
 
-  const sendResult = await sendMarkdownMessage(
-    bot,
-    process.env.TG_PERSONAL_CHAT_ID!,
-    result.rawBrowserData as string,
-    Number(process.env.TG_WEATHER_THREAD_ID!),
-  );
+  eventBus.emit(EVENT_CHANNEL_SEND_MESSAGE, {
+    channel: 'telegram',
+    messages: [result.rawBrowserData as string],
+    extra: {
+      tgExtra: {
+        chatId: process.env.TG_PERSONAL_CHAT_ID!,
+        threadId: Number(process.env.TG_WEATHER_THREAD_ID!),
+      },
+    },
+  });
 
-  logger.info('[WeatherAgent] weather send result', sendResult);
+  logger.info('[WeatherAgent] weather report emitted to event bus');
 
   return { analysis: parseMessageContent(lastMessage.content) };
 }

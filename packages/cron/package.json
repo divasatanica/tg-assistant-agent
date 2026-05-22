@@ -11,6 +11,7 @@
   "dependencies": {
     "@krobert/agents": "*",
     "@krobert/channel": "*",
+    "@krobert/events": "*",
     "@krobert/function-tools": "*",
     "node-cron": "^4.2.1",
     "@krobert/utils": "*"

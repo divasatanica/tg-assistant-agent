@@ -25,6 +25,7 @@ export interface TelegramMessageTarget {
   chatId?: string;
   threadId?: number;
   replyToMessageId?: number;
+  channel?: string;
 }
 
 export const AgentState = Annotation.Root({

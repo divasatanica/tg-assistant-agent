@@ -1,9 +1,7 @@
-import { messageChannel } from '@krobert/channel/message-channel';
+import { eventBus, EVENT_CHANNEL_SEND_MESSAGE } from '@krobert/events';
 import { AgentState, model } from '../global';
 import {
-  EVENT_MESSAGE_CHANNEL_SEND_MESSAGE,
   logger,
-  MESSAGE_CHANNEL,
   parseMessageContent,
   RSS_ANALYZER_MAX_RETRY_TIMES,
   RSS_ANALYZER_RETRY_BASE_DELAY_MS,
@@ -37,6 +35,9 @@ export const analyzerNode = async (state: typeof AgentState.State) => {
 
   for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
     try {
+      logger.info(
+        `[RSSAgent] analyzer invoke attempt ${attempt + 1}/${maxRetries + 1}, context length: ${context.length}`,
+      );
       response = await model.invoke([
         ...(state.messages || []),
         ['user', `Here's fetched feeds organized by category as JSON format: ${context}`],
@@ -59,8 +60,8 @@ export const analyzerNode = async (state: typeof AgentState.State) => {
   if (!response) {
     logger.error('[RSSAgent] analyzer invoke failed after retries', { error: lastError });
 
-    messageChannel.emit(EVENT_MESSAGE_CHANNEL_SEND_MESSAGE, {
-      channel: MESSAGE_CHANNEL.TELEGRAM,
+    eventBus.emit(EVENT_CHANNEL_SEND_MESSAGE, {
+      channel: state.tgExtra?.channel || 'telegram',
       messages: ['❌ RSS 分析失败：Gemini API 在重试后仍无法返回结果，请稍后重试。'],
       extra: {
         tgExtra: {
@@ -74,8 +75,8 @@ export const analyzerNode = async (state: typeof AgentState.State) => {
     throw lastError;
   }
 
-  messageChannel.emit(EVENT_MESSAGE_CHANNEL_SEND_MESSAGE, {
-    channel: MESSAGE_CHANNEL.TELEGRAM,
+  eventBus.emit(EVENT_CHANNEL_SEND_MESSAGE, {
+    channel: state.tgExtra?.channel || 'telegram',
     messages: [parseMessageContent(response.content)],
     extra: {
       tgExtra: {

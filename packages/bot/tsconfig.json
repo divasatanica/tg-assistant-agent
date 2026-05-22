@@ -8,6 +8,7 @@
   "references": [
     { "path": "../channel" },
     { "path": "../cron" },
-    { "path": "../agents" }
+    { "path": "../agents" },
+    { "path": "../events" }
   ]
 }

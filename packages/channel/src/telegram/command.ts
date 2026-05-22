@@ -1,7 +1,6 @@
 import { Telegraf, Markup } from 'telegraf';
 import { rssDB } from '@krobert/utils/sqlite/sqlite';
-import { EVENT_TELEGRAM_COMMAND_RSS_SUM, EVENT_TELEGRAM_COMMAND_SEC } from '@krobert/utils';
-import { telegramCommandChannel } from './command-channel';
+import { eventBus, EVENT_AGENT_RSS_SUM, EVENT_AGENT_SEC } from '@krobert/events';
 
 // 临时存储待选类别的订阅信息 (避免 callback_data 长度超过 64 bytes)
 const pendingSubs = new Map<
@@ -102,11 +101,13 @@ export function registerCommandHandler(bot: Telegraf) {
       return ctx.reply('❌ 用法: /rsssum 类别');
     }
 
-    telegramCommandChannel.emit(EVENT_TELEGRAM_COMMAND_RSS_SUM, {
+    eventBus.emit(EVENT_AGENT_RSS_SUM, {
       category: match[1].trim(),
-      chatId: String(ctx.chat.id),
-      threadId: ctx.message.message_thread_id,
-      messageId: ctx.message.message_id,
+      tgExtra: {
+        chatId: String(ctx.chat.id),
+        threadId: ctx.message.message_thread_id,
+        replyToMessageId: ctx.message.message_id,
+      },
     });
   });
 
@@ -124,11 +125,13 @@ export function registerCommandHandler(bot: Telegraf) {
       return ctx.reply('❌ symbol 不能为空');
     }
 
-    telegramCommandChannel.emit(EVENT_TELEGRAM_COMMAND_SEC, {
+    eventBus.emit(EVENT_AGENT_SEC, {
       symbol,
-      chatId: String(ctx.chat.id),
-      threadId: ctx.message.message_thread_id,
-      messageId: ctx.message.message_id,
+      tgExtra: {
+        chatId: String(ctx.chat.id),
+        threadId: ctx.message.message_thread_id,
+        replyToMessageId: ctx.message.message_id,
+      },
     });
   });
 }

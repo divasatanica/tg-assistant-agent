@@ -5,6 +5,11 @@ import { LOG_LEVEL } from './config';
 const logFormat = winston.format.combine(
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
   winston.format.printf(({ timestamp, level, message, ...meta }) => {
+    try {
+      JSON.stringify(meta);
+    } catch (err) {
+      console.log('meta', meta);
+    }
     const metaStr = Object.keys(meta).length ? ` ${JSON.stringify(meta)}` : '';
     return `[${timestamp}] [${level.toUpperCase()}] ${message}${metaStr}`;
   }),

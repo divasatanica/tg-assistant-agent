@@ -4,4 +4,5 @@ export const EVENT_TELEGRAM_COMMAND_SEC = 'telegram:command:sec';
 
 export const MESSAGE_CHANNEL = {
   TELEGRAM: 'telegram',
+  FEISHU: 'feishu',
 };
