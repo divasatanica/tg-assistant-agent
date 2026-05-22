@@ -26,6 +26,44 @@ const ITEM_PATTERNS_10K: Record<string, { pattern: RegExp; label: string }> = {
   },
 };
 
+// 20-F / 40-F use different Item numbering than 10-K:
+//   Item 3 = Key Information / Risk Factors
+//   Item 4 = Information on the Company (Business overview)
+//   Item 5 = Operating and Financial Review and Prospects (MD&A)
+//   Item 18 = Financial Statements
+const ITEM_PATTERNS_20F: Record<string, { pattern: RegExp; label: string }> = {
+  item3: {
+    pattern: /(?:Item|ITEM)\s*&?nbsp;?\s*3\s*[.—\s-]\s*(?:Key|KEY|Risk|RISK)/,
+    label: 'Item 3 - Key Information / Risk Factors',
+  },
+  item4: {
+    pattern: /(?:Item|ITEM)\s*&?nbsp;?\s*4\s*[.—\s-]\s*(?:Information|INFORMATION)/,
+    label: 'Item 4 - Information on the Company (Business)',
+  },
+  item5: {
+    pattern: /(?:Item|ITEM)\s*&?nbsp;?\s*5\s*[.—\s-]\s*(?:Operating|OPERATING|Financial|FINANCIAL)/,
+    label: 'Item 5 - Operating and Financial Review (MD&A)',
+  },
+  item18: {
+    pattern: /(?:Item|ITEM)\s*&?nbsp;?\s*18\s*[.—\s-]\s*(?:Financial|FINANCIAL)/,
+    label: 'Item 18 - Financial Statements',
+  },
+};
+
+// 6-K is a catch-all: it often embeds earnings releases or material event disclosures.
+// No standardized Item structure, but typically contains a header identifying the report nature.
+const ITEM_PATTERNS_6K: Record<string, { pattern: RegExp; label: string }> = {
+  earningsRelease: {
+    pattern:
+      /(?:Earnings|EARNINGS|Results|RESULTS|Financial|FINANCIAL)\s*(?:Release|RELEASE|Results|RESULTS|Report|REPORT)/,
+    label: '6-K - Earnings / Financial Results Release',
+  },
+  materialEvent: {
+    pattern: /(?:Material|MATERIAL|Report of Foreign|REPORT OF FOREIGN)/,
+    label: '6-K - Material Event Disclosure',
+  },
+};
+
 const ITEM_PATTERNS_8K: Record<string, { pattern: RegExp; label: string }> = {
   item101: {
     pattern: /(?:Item|ITEM|Section|SECTION)\s*&?nbsp;?\s*1\.01/,
@@ -181,6 +219,24 @@ export function parseFilingHtml(html: string, formType: string): ParsedSection[]
         'item901',
       ]);
 
+    case '20-F':
+    case '20-F/A':
+    case '40-F':
+    case '40-F/A':
+      return extractSectionsByPatterns(html, ITEM_PATTERNS_20F, [
+        'item3',
+        'item4',
+        'item5',
+        'item18',
+      ]);
+
+    case '6-K':
+    case '6-K/A':
+      return extractSectionsByPatterns(html, ITEM_PATTERNS_6K, [
+        'earningsRelease',
+        'materialEvent',
+      ]);
+
     case 'DEF 14A':
     case 'DEFR14A':
     case 'DEFA14A':
@@ -191,8 +247,15 @@ export function parseFilingHtml(html: string, formType: string): ParsedSection[]
         'executiveCompensation',
       ]);
 
-    default:
-      // Generic fallback: try 10-K patterns since most filings follow similar structure
-      return extractSectionsByPatterns(html, ITEM_PATTERNS_10K, ['item1', 'item7', 'item8']);
+    default: {
+      // Generic fallback: try both US domestic and foreign patterns
+      const domestic = extractSectionsByPatterns(html, ITEM_PATTERNS_10K, [
+        'item1',
+        'item7',
+        'item8',
+      ]);
+      if (domestic.length > 0) return domestic;
+      return extractSectionsByPatterns(html, ITEM_PATTERNS_20F, ['item4', 'item5', 'item18']);
+    }
   }
 }

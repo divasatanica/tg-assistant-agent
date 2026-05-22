@@ -49,7 +49,18 @@ class LongBridgeClient {
   }
 }
 
-export const longBridgeClient = new LongBridgeClient();
+let _client: LongBridgeClient | null = null;
+
+function getClient(): LongBridgeClient {
+  if (!_client) _client = new LongBridgeClient();
+  return _client;
+}
+
+export const longBridgeClient: LongBridgeClient = new Proxy({} as LongBridgeClient, {
+  get(_, prop: string | symbol) {
+    return Reflect.get(getClient(), prop, getClient());
+  },
+});
 
 export async function formatPositions(): Promise<string> {
   const positions = await longBridgeClient.getPosition();

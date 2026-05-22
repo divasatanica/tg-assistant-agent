@@ -7,6 +7,8 @@ import {
   cikTo10Digits,
   getSubmissions,
 } from '../edgar-client';
+// Foreign issuers file 20-F (annual, like 10-K) and 6-K (quarterly/events, like 10-Q/8-K).
+const FOREIGN_FALLBACK_FORMS = ['20-F', '40-F', '6-K'];
 
 export const fetchFilingsNode = async (state: typeof AgentState.State) => {
   const { tickers, formTypes = ['10-K'], maxFilingsPerTicker = 1 } = state;
@@ -69,14 +71,57 @@ export const fetchFilingsNode = async (state: typeof AgentState.State) => {
           `[SEC Agent] Found ${matched.length} filing(s) for ${ticker}: ${matched.map((f) => `${f.formType} (${f.reportDate})`).join(', ')}`,
         );
       } else {
-        logger.info(`[SEC Agent] No matching filings (${formTypes.join(',')}) for ${ticker}`);
+        // 国内表单找不到 → 尝试 Foreign Private Issuer 表单 (20-F, 6-K)
+        const foreignFormSet = FOREIGN_FALLBACK_FORMS.filter((f) => !formTypes.includes(f));
+        if (foreignFormSet.length > 0) {
+          logger.info(
+            `[SEC Agent] No ${formTypes.join(',')} filings for ${ticker}, trying foreign issuer forms: ${foreignFormSet.join(', ')}`,
+          );
+          for (
+            let i = 0;
+            i < recent.accessionNumber.length && matched.length < maxFilingsPerTicker;
+            i++
+          ) {
+            if (!foreignFormSet.includes(recent.form[i])) continue;
+
+            const archiveUrls = buildFilingArchiveUrls(
+              entry.cik_str,
+              recent.accessionNumber[i],
+              recent.primaryDocument[i],
+            );
+
+            matched.push({
+              ticker: ticker.toUpperCase().trim(),
+              cik: cik10,
+              formType: recent.form[i],
+              filingDate: recent.filingDate[i],
+              reportDate: recent.reportDate[i],
+              accessionNumber: recent.accessionNumber[i],
+              primaryDocument: recent.primaryDocument[i],
+              htmlUrl: archiveUrls.primaryDocumentUrl ?? archiveUrls.filingIndexHtmlUrl,
+            });
+          }
+
+          if (matched.length > 0) {
+            filings[ticker.toUpperCase().trim()] = matched;
+            logger.info(
+              `[SEC Agent] Found ${matched.length} foreign filing(s) for ${ticker}: ${matched.map((f) => `${f.formType} (${f.reportDate})`).join(', ')}`,
+            );
+          } else {
+            logger.info(
+              `[SEC Agent] No matching filings (${[...formTypes, ...foreignFormSet].join(',')}) for ${ticker}`,
+            );
+          }
+        } else {
+          logger.info(`[SEC Agent] No matching filings (${formTypes.join(',')}) for ${ticker}`);
+        }
       }
     } catch (err) {
       logger.error(`[SEC Agent] Failed to fetch filings for ${ticker}`, err);
     }
   }
 
-  // 收集所有找到的 Filing URL，发送给用户
+  // Domestic vs Foreign Private Issuer form type mapping.
   const allUrls: string[] = [];
   for (const [ticker, tickerFilings] of Object.entries(filings)) {
     const urls = tickerFilings.map((f) => f.htmlUrl).filter(Boolean);

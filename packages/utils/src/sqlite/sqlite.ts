@@ -3,11 +3,22 @@ import { join } from 'path';
 import { SQLITE_DB_PATH } from '../config';
 import { RSSDatabase } from './rss-sub';
 
-const dbPath = join(process.cwd(), SQLITE_DB_PATH);
-const db = new Database(dbPath);
+let _db: Database | null = null;
+let _rssDB: RSSDatabase | null = null;
 
-// 开启 WAL 模式 (Write-Ahead Logging) 并设置忙碌超时
-db.run('PRAGMA journal_mode = WAL');
-db.run('PRAGMA busy_timeout = 5000');
+function getDb(): Database {
+  if (!_db) {
+    const dbPath = join(process.cwd(), SQLITE_DB_PATH);
+    _db = new Database(dbPath);
+    _db.run('PRAGMA journal_mode = WAL');
+    _db.run('PRAGMA busy_timeout = 5000');
+  }
+  return _db;
+}
 
-export const rssDB = new RSSDatabase(db);
+export const rssDB: RSSDatabase = new Proxy({} as RSSDatabase, {
+  get(_, prop: string | symbol) {
+    if (!_rssDB) _rssDB = new RSSDatabase(getDb());
+    return Reflect.get(_rssDB, prop, _rssDB);
+  },
+});

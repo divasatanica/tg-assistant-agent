@@ -135,7 +135,9 @@ export interface SubmissionsResponse {
 }
 
 export async function getSubmissions(cik10: string): Promise<SubmissionsResponse> {
-  logger.debug(`[EdgarClient] Fetching submissions for CIK ${cik10}...`);
+  logger.debug(
+    `[EdgarClient] Fetching submissions for CIK ${cik10}..., URL: ${SEC_DATA}/submissions/CIK${cik10}.json`,
+  );
   const res = await rateLimitedFetch(`${SEC_DATA}/submissions/CIK${cik10}.json`);
   return (await res.json()) as SubmissionsResponse;
 }
