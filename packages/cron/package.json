@@ -9,8 +9,10 @@
   },
   "types": "./dist/index.d.ts",
   "dependencies": {
-    "node-cron": "^4.2.1",
     "@krobert/agents": "*",
+    "@krobert/channel": "*",
+    "@krobert/function-tools": "*",
+    "node-cron": "^4.2.1",
     "@krobert/utils": "*"
   },
   "devDependencies": {

@@ -1,4 +1,5 @@
 import Parser from 'rss-parser';
+import { logger } from '@krobert/utils';
 
 // 定义我们想要提取的自定义字段或标准 RSS 字段
 type CustomFeed = { title: string };
@@ -47,7 +48,8 @@ export async function fetchAndParseRSS(url: string): Promise<Parser.Output<Custo
     const feed = await parser.parseURL(url);
     return feed;
   } catch (error) {
-    console.error(`Error fetching or parsing RSS for url [${url}]:`, error);
+    logger.error(`[Tools] Error fetching or parsing RSS for url [${url}]:`, error);
+
     return null;
   }
 }

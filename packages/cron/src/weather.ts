@@ -1,7 +1,9 @@
 import cron from 'node-cron';
 import { sleep } from '@krobert/utils/common';
+import { logger } from '@krobert/utils';
+
 import { ICAO_LIST, runWeatherTask } from '@krobert/function-tools/weather-supervisor';
-import { runAgent } from '@krobert/agents/weather-agent/index';
+import { runWeatherAgent } from '@krobert/agents';
 
 /**
  * 判断当前分钟是否处于“高频采样区”
@@ -16,11 +18,11 @@ function isHighFrequencyZone(minutes: number): boolean {
 }
 
 export function bootstrapWeatherCron() {
-  console.log('[Cron] 启动天气动态采样逻辑...');
+  logger.info('[Cron] 启动天气动态采样逻辑...');
 
   // 每 30 秒运行一次逻辑检查
   // node-cron 支持 6 位表达式 (秒 分 时 日 月 周)
-  cron.schedule('*/30 * * * * *', async () => {
+  cron.schedule('*/30 8-16 * * *', async () => {
     const now = new Date();
     const minutes = now.getMinutes();
     const seconds = now.getSeconds();
@@ -45,7 +47,7 @@ export function bootstrapWeatherCron() {
       if (minutes % 5 === 0 && seconds < 30) {
         // 处于高频区：每 30 秒都运行
         ICAO_LIST.reduce((acc, curr) => {
-          console.log(`[Cron] [${new Date().toISOString()}] 执行天气抓取...`);
+          logger.info(`[Cron] [${new Date().toISOString()}] 执行天气抓取...`);
           return acc
             .then(() => {
               return runWeatherTask(curr.code, {
@@ -64,12 +66,12 @@ export function bootstrapWeatherCron() {
   // 每天 9:00AM - 12:35PM 之间，每 30 分钟运行一次 (05 分和 35 分)
   // 9:05, 9:35 ... 12:05, 12:35
   cron.schedule('5,35 9-12 * * *', async () => {
-    console.log(`[Cron] [${new Date().toISOString()}] 执行 9:00AM-12:35PM 定时天气任务...`);
+    logger.info(`[Cron] [${new Date().toISOString()}] 执行 9:00AM-12:35PM 定时天气任务...`);
     // 运行逻辑补在此处
     ICAO_LIST.reduce((acc, curr) => {
       return acc
         .then(() => {
-          return runAgent(curr.city, curr.code);
+          return runWeatherAgent(curr.city, curr.code);
         })
         .then(() => {
           return sleep(3000) as Promise<void>;

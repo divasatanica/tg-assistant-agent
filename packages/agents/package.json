@@ -5,9 +5,12 @@
   "main": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./*": "./src/*.ts"
+    "./rss-agent/index": "./src/rss-agent/index.ts",
+    "./sec-filing-agent/index": "./src/sec-filing-agent/index.ts",
+    "./weather-agent/index": "./src/weather-agent/index.ts",
+    "./longbridge-agent/index": "./src/longbridge-agent/index.ts"
   },
-  "types": "./dist/index.d.ts",
+  "types": "./src/index.ts",
   "dependencies": {
     "@google/adk": "^0.3.0",
     "@langchain/core": "^1.1.39",

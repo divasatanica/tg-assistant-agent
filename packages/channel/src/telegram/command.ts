@@ -1,27 +1,31 @@
 import { Telegraf, Markup } from 'telegraf';
 import { rssDB } from '@krobert/utils/sqlite/sqlite';
-import { runAgent } from '@krobert/agents/rss-agent/index';
+import { EVENT_TELEGRAM_COMMAND_RSS_SUM, EVENT_TELEGRAM_COMMAND_SEC } from '@krobert/utils';
+import { telegramCommandChannel } from './command-channel';
 
 // 临时存储待选类别的订阅信息 (避免 callback_data 长度超过 64 bytes)
-const pendingSubs = new Map<string, { url: string; title: string; userId: number }>();
+const pendingSubs = new Map<
+  string,
+  { url: string; subscription_type: string; title: string; userId: number }
+>();
 
 export function registerCommandHandler(bot: Telegraf) {
   bot.command('rsssub', (ctx) => {
-    // 格式: /rsssub <url> "<标题>"
+    // 格式: /rsssub <url> <type> "<标题>"
     const text = ctx.message.text;
 
-    const match = text.match(/^\/rsssub\s+(\S+)\s+"([^"]+)"/);
+    const match = text.match(/^\/rsssub\s+(\S+)\s+(\S+)\s+"([^"]+)"/);
 
     if (!match) {
-      return ctx.reply('❌ 用法: /rsssub <url> "<标题>"');
+      return ctx.reply('❌ 用法: /rsssub <url> <type> "<标题>"');
     }
 
-    const [, url, title] = match;
+    const [, url, subscription_type, title] = match;
     const userId = ctx.from.id;
 
     // 生成短唯一标识
     const id = Date.now().toString(36);
-    pendingSubs.set(id, { url, title, userId });
+    pendingSubs.set(id, { url, subscription_type, title, userId });
 
     ctx.reply(`正在订阅: <b>${title}</b>\n请选择类别:`, {
       parse_mode: 'HTML',
@@ -54,10 +58,10 @@ export function registerCommandHandler(bot: Telegraf) {
       return;
     }
 
-    const { url, title } = pending;
+    const { url, title, subscription_type } = pending;
     pendingSubs.delete(id); // 清理
 
-    const success = rssDB.addSubscription(url, title, category);
+    const success = rssDB.addSubscription(url, title, subscription_type, category);
 
     // 移除 inline 键盘并更新文本
     await ctx.editMessageText(
@@ -92,16 +96,39 @@ export function registerCommandHandler(bot: Telegraf) {
 
   bot.command('rsssum', (ctx) => {
     const text = ctx.message.text;
-    const match = text.match(/^\/rsssum\s+(.+)$/);
+    const match = text.match(/^\/rsssum\s+(\S+)$/);
 
     if (!match) {
-      return ctx.reply('❌ 用法: /rsssum 类别1 类别2 ...');
+      return ctx.reply('❌ 用法: /rsssum 类别');
     }
 
-    const categories = match[1].trim().split(/\s+/);
+    telegramCommandChannel.emit(EVENT_TELEGRAM_COMMAND_RSS_SUM, {
+      category: match[1].trim(),
+      chatId: String(ctx.chat.id),
+      threadId: ctx.message.message_thread_id,
+      messageId: ctx.message.message_id,
+    });
+  });
 
-    runAgent(categories);
+  bot.command('sec', (ctx) => {
+    const text = ctx.message.text;
+    const match = text.match(/^\/sec(?:@\S+)?\s+(\S+)$/);
 
-    ctx.reply(`正在分析类别: ${categories.join(', ')} ...`);
+    if (!match) {
+      return ctx.reply('❌ 用法: /sec <symbol>');
+    }
+
+    const symbol = match[1].replace(/^\$/, '').trim().toUpperCase();
+
+    if (!symbol) {
+      return ctx.reply('❌ symbol 不能为空');
+    }
+
+    telegramCommandChannel.emit(EVENT_TELEGRAM_COMMAND_SEC, {
+      symbol,
+      chatId: String(ctx.chat.id),
+      threadId: ctx.message.message_thread_id,
+      messageId: ctx.message.message_id,
+    });
   });
 }

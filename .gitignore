@@ -2,3 +2,9 @@ node_modules
 .env*
 *.db**
 **/dist/*
+tsconfig.tsbuildinfo
+*.sqbpro
+.vscode/sftp.json
+logs/**
+.claude/settings.local.json
+**/logs/**

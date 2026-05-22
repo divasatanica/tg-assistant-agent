@@ -1,5 +1,6 @@
 import { Readability } from '@mozilla/readability';
 import { JSDOM } from 'jsdom';
+import { logger } from '@krobert/utils';
 
 /**
  * A utility type that makes all properties of T optional and allows them to be null.
@@ -61,7 +62,8 @@ export function extractArticleContent(
       publishedTime: (article as any).publishedTime,
     };
   } catch (error) {
-    console.error('Error parsing article content:', error);
+    logger.error('[Tools] Error parsing article content:', error);
+
     return null;
   }
 }
