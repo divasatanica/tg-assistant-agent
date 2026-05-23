@@ -4,11 +4,6 @@ import { handleFeishuMessage } from './command';
 
 const FEISHU_DOMAIN = process.env.LARK_DOMAIN === 'lark' ? Domain.Lark : Domain.Feishu;
 
-logger.debug('[Feishu] Initializing channel with config', {
-  appId: LARK_APP_ID,
-  domain: FEISHU_DOMAIN,
-});
-
 /** 用于发送消息的 API Client */
 export const feishuClient = new Client({
   appId: LARK_APP_ID,

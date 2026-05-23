@@ -4,6 +4,6 @@ import { bootstrapChannelListener } from './message-channel.js';
 
 export function bootstrapChannel() {
   bootstrapTelegramChannel();
-  bootstrapFeishuChannel();
+  // bootstrapFeishuChannel();
   bootstrapChannelListener();
 }
