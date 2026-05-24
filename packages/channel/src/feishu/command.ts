@@ -175,7 +175,7 @@ export async function handleFeishuMessage(client: Client, event: FeishuMessageEv
       channelExtra: {
         chatId,
         replyToMessageId: messageId,
-        channel: 'feishu',
+        channels: ['feishu'],
       },
     });
     return;
@@ -194,7 +194,7 @@ export async function handleFeishuMessage(client: Client, event: FeishuMessageEv
       channelExtra: {
         chatId,
         replyToMessageId: messageId,
-        channel: 'feishu',
+        channels: ['feishu'],
       },
     });
     return;

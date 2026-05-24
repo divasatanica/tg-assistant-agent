@@ -4,8 +4,10 @@ import {
   logger,
   TELEGRAM_PERSONAL_CHAT_ID,
   TG_MESSAGE_THREAD_ID,
+  LARK_USER_OPEN_ID,
 } from '@krobert/utils';
 import { eventBus, EVENT_CHANNEL_SEND_MESSAGE } from '@krobert/events';
+import type { ChannelTarget } from '@krobert/events';
 
 import { AgentState } from '../global';
 import { fetchAndParseRSS, resolveRssFeed } from '@krobert/function-tools/rss-feed';
@@ -58,7 +60,7 @@ export const scraperNode = async (state: typeof AgentState.State) => {
   const categories = state.categories;
   const rssList = _rssList.filter((rss) => categories.includes(rss.category!));
 
-  logger.info('[RSSAgent] rsslist', rssList);
+  // logger.debug('[RSSAgent] rsslist', rssList);
 
   const data = await Promise.all(
     rssList.map(async (rss) => {
@@ -89,16 +91,28 @@ export const scraperNode = async (state: typeof AgentState.State) => {
     {} as Record<string, Array<Parser.Output<any>>>,
   );
 
-  // logger.debug('[RSSAgent] concatedData', concatedData);
+  const channels = state.channelExtra?.channels ?? ['telegram'];
+  const targets: ChannelTarget[] = [];
+  for (const ch of channels) {
+    if (ch === 'telegram') {
+      targets.push({
+        channel: 'telegram',
+        chatId: TELEGRAM_PERSONAL_CHAT_ID,
+        threadId: Number(TG_MESSAGE_THREAD_ID.NEWS_REPORT),
+      });
+    } else if (ch === 'feishu') {
+      if (!LARK_USER_OPEN_ID) continue;
+      targets.push({
+        channel: 'feishu',
+        chatId: LARK_USER_OPEN_ID,
+        receiveIdType: 'open_id',
+      });
+    }
+  }
+
   eventBus.emit(EVENT_CHANNEL_SEND_MESSAGE, {
-    channel: state.channelExtra?.channel || 'telegram',
+    targets,
     messages: [`已抓取类别: ${categories.join(', ')}`],
-    extra: {
-      channelExtra: {
-        chatId: state.channelExtra?.chatId ?? TELEGRAM_PERSONAL_CHAT_ID,
-        threadId: state.channelExtra?.threadId ?? Number(TG_MESSAGE_THREAD_ID.NEWS_REPORT),
-      },
-    },
   });
 
   const messageSummary = formatNewList(concatedData);
@@ -106,14 +120,8 @@ export const scraperNode = async (state: typeof AgentState.State) => {
   const messages = Object.keys(messageSummary).map((key) => messageSummary[key]);
 
   eventBus.emit(EVENT_CHANNEL_SEND_MESSAGE, {
-    channel: state.channelExtra?.channel || 'telegram',
+    targets,
     messages,
-    extra: {
-      channelExtra: {
-        chatId: state.channelExtra?.chatId,
-        threadId: state.channelExtra?.threadId ?? TG_MESSAGE_THREAD_ID.NEWS_REPORT,
-      },
-    },
   });
 
   return { rssData: concatedData };

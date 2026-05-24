@@ -25,7 +25,8 @@ export interface TelegramMessageTarget {
   chatId?: string;
   threadId?: number;
   replyToMessageId?: number | string;
-  channel?: string;
+  channels?: Array<'telegram' | 'feishu'>;
+  receiveIdType?: 'open_id' | 'chat_id' | 'user_id' | 'union_id';
 }
 
 export const AgentState = Annotation.Root({

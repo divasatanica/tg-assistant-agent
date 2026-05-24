@@ -14,13 +14,14 @@ export async function sendFeishuMessage(
   client: Client,
   chatId: string,
   content: string,
-  _replyToMessageId?: string,
+  _replyToMessageId?: string | number,
+  receiveIdType: 'open_id' | 'chat_id' | 'user_id' | 'union_id' = 'chat_id',
 ): Promise<void> {
   try {
     const segments = parseMarkdownToFeishu(content);
 
     if (segments.length === 0) {
-      await sendPlainText(client, chatId, content);
+      await sendPlainText(client, chatId, content, receiveIdType);
       return;
     }
 
@@ -29,7 +30,7 @@ export async function sendFeishuMessage(
       const { msg_type, content: msgContent } = segmentToFeishuData(segment);
 
       await client.im.message.create({
-        params: { receive_id_type: 'chat_id' },
+        params: { receive_id_type: receiveIdType },
         data: {
           receive_id: chatId,
           msg_type: msg_type as string,
@@ -39,6 +40,7 @@ export async function sendFeishuMessage(
 
       logger.debug('[Feishu] Message sent', {
         chatId,
+        receiveIdType,
         segmentType: segment.type,
         index: i,
         total: segments.length,
@@ -53,16 +55,21 @@ export async function sendFeishuMessage(
     // fallback: 纯文本发送
     try {
       const plainText = content.replace(/[*#`|\[\]()]/g, '').slice(0, 2000);
-      await sendPlainText(client, chatId, plainText);
+      await sendPlainText(client, chatId, plainText, receiveIdType);
     } catch {
       logger.error('[Feishu] Fallback plain text send also failed');
     }
   }
 }
 
-export async function sendPlainText(client: Client, chatId: string, text: string): Promise<void> {
+export async function sendPlainText(
+  client: Client,
+  chatId: string,
+  text: string,
+  receiveIdType: 'open_id' | 'chat_id' | 'user_id' | 'union_id' = 'chat_id',
+): Promise<void> {
   await client.im.message.create({
-    params: { receive_id_type: 'chat_id' },
+    params: { receive_id_type: receiveIdType },
     data: {
       receive_id: chatId,
       msg_type: 'text',
@@ -76,19 +83,20 @@ export async function sendFeishuCardTemplate(
   chatId: string,
   templateId: string,
   variables: Record<string, string>,
+  receiveIdType: 'open_id' | 'chat_id' | 'user_id' | 'union_id' = 'chat_id',
 ): Promise<void> {
-  await client.im.message.create({
-    params: { receive_id_type: 'chat_id' },
+  logger.debug('[Feishu] Sending card template message', {
+    chatId,
+    templateId,
+    variables,
+    receiveIdType,
+  });
+  await client.im.message.createByCard({
+    params: { receive_id_type: receiveIdType },
     data: {
       receive_id: chatId,
-      msg_type: 'interactive',
-      content: JSON.stringify({
-        type: 'template',
-        data: {
-          template_id: templateId,
-          template_variable: variables,
-        },
-      }),
+      template_id: templateId,
+      template_variable: variables,
     },
   });
 }

@@ -1,5 +1,11 @@
-import { logger } from '@krobert/utils';
+import {
+  logger,
+  TELEGRAM_PERSONAL_CHAT_ID,
+  LARK_USER_OPEN_ID,
+  TG_MESSAGE_THREAD_ID,
+} from '@krobert/utils';
 import { eventBus, EVENT_CHANNEL_SEND_MESSAGE } from '@krobert/events';
+import type { ChannelTarget } from '@krobert/events';
 import { AgentState, FilingMetadata } from '../global';
 import {
   buildFilingArchiveUrls,
@@ -136,16 +142,28 @@ export const fetchFilingsNode = async (state: typeof AgentState.State) => {
   }
 
   if (allUrls.length > 0 && state.channelExtra) {
-    eventBus.emit(EVENT_CHANNEL_SEND_MESSAGE, {
-      channel: 'telegram',
-      messages: allUrls,
-      extra: {
-        channelExtra: {
-          chatId: state.channelExtra.chatId,
-          threadId: state.channelExtra.threadId,
+    const channels = state.channelExtra.channels ?? ['telegram'];
+    const targets: ChannelTarget[] = [];
+    for (const ch of channels) {
+      if (ch === 'telegram') {
+        targets.push({
+          channel: 'telegram',
+          chatId: TELEGRAM_PERSONAL_CHAT_ID,
+          threadId: Number(TG_MESSAGE_THREAD_ID.SEC_FILING),
           replyToMessageId: state.channelExtra.replyToMessageId,
-        },
-      },
+        });
+      } else if (ch === 'feishu') {
+        if (!LARK_USER_OPEN_ID) continue;
+        targets.push({
+          channel: 'feishu',
+          chatId: LARK_USER_OPEN_ID,
+          receiveIdType: 'open_id',
+        });
+      }
+    }
+    eventBus.emit(EVENT_CHANNEL_SEND_MESSAGE, {
+      targets,
+      messages: allUrls,
     });
   }
 

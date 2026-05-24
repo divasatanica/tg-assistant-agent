@@ -1,7 +1,37 @@
 import { eventBus, EVENT_CHANNEL_SEND_MESSAGE } from '@krobert/events';
-import { logger, parseMessageContent, TG_MESSAGE_THREAD_ID } from '@krobert/utils';
+import type { ChannelTarget } from '@krobert/events';
+import {
+  logger,
+  parseMessageContent,
+  TG_MESSAGE_THREAD_ID,
+  TELEGRAM_PERSONAL_CHAT_ID,
+  LARK_USER_OPEN_ID,
+} from '@krobert/utils';
 import { model } from '../global';
-import type { AgentState } from '../global';
+import type { AgentState, TelegramMessageTarget } from '../global';
+
+function buildSecTargets(channelExtra: TelegramMessageTarget | undefined): ChannelTarget[] {
+  const channels = channelExtra?.channels ?? ['telegram'];
+  const targets: ChannelTarget[] = [];
+  for (const ch of channels) {
+    if (ch === 'telegram') {
+      targets.push({
+        channel: 'telegram',
+        chatId: TELEGRAM_PERSONAL_CHAT_ID,
+        threadId: Number(TG_MESSAGE_THREAD_ID.SEC_FILING),
+        replyToMessageId: channelExtra?.replyToMessageId,
+      });
+    } else if (ch === 'feishu') {
+      if (!LARK_USER_OPEN_ID) continue;
+      targets.push({
+        channel: 'feishu',
+        chatId: LARK_USER_OPEN_ID,
+        receiveIdType: 'open_id',
+      });
+    }
+  }
+  return targets;
+}
 
 export const analyzerNode = async (state: typeof AgentState.State) => {
   const context: Record<string, unknown> = {};
@@ -49,21 +79,13 @@ export const analyzerNode = async (state: typeof AgentState.State) => {
   if (!response) {
     logger.error('[SEC Agent] Analyzer invoke failed after retries', { error: lastError });
 
-    logger.debug('[SEC Agent] Emitting failure message to Telegram channel', {
-      threadId: state.channelExtra?.threadId,
-      chatId: state.channelExtra?.chatId,
+    logger.debug('[SEC Agent] Emitting failure message', {
+      threadId: TG_MESSAGE_THREAD_ID.SEC_FILING,
     });
 
     eventBus.emit(EVENT_CHANNEL_SEND_MESSAGE, {
-      channel: state.channelExtra?.channel || 'telegram',
+      targets: buildSecTargets(state.channelExtra),
       messages: ['❌ SEC 分析失败：Gemini API 在 3 次重试后仍无法返回结果，请稍后重试。'],
-      extra: {
-        channelExtra: {
-          chatId: state.channelExtra?.chatId,
-          threadId: state.channelExtra?.threadId ?? Number(TG_MESSAGE_THREAD_ID.SEC_FILING),
-          replyToMessageId: state.channelExtra?.replyToMessageId,
-        },
-      },
     });
 
     throw lastError;
@@ -73,15 +95,8 @@ export const analyzerNode = async (state: typeof AgentState.State) => {
   logger.info(`[SEC Agent] Analysis complete, ${finalReport.length} chars`);
 
   eventBus.emit(EVENT_CHANNEL_SEND_MESSAGE, {
-    channel: state.channelExtra?.channel || 'telegram',
+    targets: buildSecTargets(state.channelExtra),
     messages: [finalReport],
-    extra: {
-      channelExtra: {
-        chatId: state.channelExtra?.chatId,
-        threadId: state.channelExtra?.threadId ?? Number(TG_MESSAGE_THREAD_ID.SEC_FILING),
-        replyToMessageId: state.channelExtra?.replyToMessageId,
-      },
-    },
   });
 
   return { finalReport };

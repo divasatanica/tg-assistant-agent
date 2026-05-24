@@ -2,8 +2,15 @@ import { StateGraph, START, END } from '@langchain/langgraph';
 import { SystemMessage } from '@langchain/core/messages';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { formatTime, logger } from '@krobert/utils';
+import {
+  formatTime,
+  logger,
+  TELEGRAM_PERSONAL_CHAT_ID,
+  LARK_USER_OPEN_ID,
+  TG_MESSAGE_THREAD_ID,
+} from '@krobert/utils';
 import { eventBus, EVENT_CHANNEL_SEND_MESSAGE } from '@krobert/events';
+import type { ChannelTarget } from '@krobert/events';
 import { AgentState } from './global';
 import { fetchFilingsNode } from './nodes/fetch-filings';
 import { extractSectionsNode } from './nodes/extract-sections';
@@ -79,20 +86,29 @@ export async function runAgent(
     const noFilingsMsg = `⚠️ 未找到 ${tickers.join(', ')} 可分析的 SEC 文件。`;
     logger.info(`[SEC Agent] No filings found for ${tickers.join(', ')}, sending notification`);
 
-    logger.debug('[SEC Agent] Emitting no filings message to Telegram channel', {
-      threadId: options.channelExtra.threadId,
-      chatId: options.channelExtra.chatId,
-    });
-    eventBus.emit(EVENT_CHANNEL_SEND_MESSAGE, {
-      channel: options.channelExtra.channel || 'telegram',
-      messages: [noFilingsMsg],
-      extra: {
-        channelExtra: {
-          chatId: options.channelExtra.chatId,
-          threadId: options.channelExtra.threadId,
+    logger.debug('[SEC Agent] Emitting no filings message');
+    const channels = options.channelExtra.channels ?? ['telegram'];
+    const targets: ChannelTarget[] = [];
+    for (const ch of channels) {
+      if (ch === 'telegram') {
+        targets.push({
+          channel: 'telegram',
+          chatId: TELEGRAM_PERSONAL_CHAT_ID,
+          threadId: Number(TG_MESSAGE_THREAD_ID.SEC_FILING),
           replyToMessageId: options.channelExtra.replyToMessageId,
-        },
-      },
+        });
+      } else if (ch === 'feishu') {
+        if (!LARK_USER_OPEN_ID) continue;
+        targets.push({
+          channel: 'feishu',
+          chatId: LARK_USER_OPEN_ID,
+          receiveIdType: 'open_id',
+        });
+      }
+    }
+    eventBus.emit(EVENT_CHANNEL_SEND_MESSAGE, {
+      targets,
+      messages: [noFilingsMsg],
     });
   }
 

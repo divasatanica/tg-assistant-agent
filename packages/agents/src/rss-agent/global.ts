@@ -10,7 +10,8 @@ export interface TelegramMessageTarget {
   chatId?: string;
   threadId?: number;
   replyToMessageId?: string | number;
-  channel?: string;
+  channels?: Array<'telegram' | 'feishu'>;
+  receiveIdType?: 'open_id' | 'chat_id' | 'user_id' | 'union_id';
 }
 
 // 定义全局状态架构

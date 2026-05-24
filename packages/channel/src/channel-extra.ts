@@ -1,36 +1,33 @@
-export interface ChannelExtra {
+import type { TelegramTarget, FeishuTarget } from '@krobert/events';
+
+export function telegramTarget(params: {
   chatId?: string;
   threadId?: number;
-  replyToMessageId?: number | string;
-  channel?: string;
-  feishuType?: 'message' | 'plain_text' | 'card_template';
-  cardTemplate?: {
-    templateId: string;
-    variables: Record<string, string>;
-  };
+  replyToMessageId?: number;
+  raw?: boolean;
+}): TelegramTarget {
+  return { channel: 'telegram' as const, ...params };
 }
 
-export function telegramExtra(
-  chatId?: string,
-  threadId?: number,
-  replyToMessageId?: number,
-): ChannelExtra {
-  return { chatId, threadId, replyToMessageId, channel: 'telegram' };
+export function feishuTarget(params: {
+  chatId: string;
+  replyToMessageId?: string;
+  receiveIdType?: 'open_id' | 'chat_id' | 'user_id' | 'union_id';
+}): FeishuTarget {
+  return { channel: 'feishu' as const, feishuType: 'message' as const, ...params };
 }
 
-export function feishuExtra(chatId: string, replyToMessageId?: string): ChannelExtra {
-  return { chatId, replyToMessageId, channel: 'feishu' };
-}
-
-export function feishuCardExtra(
-  chatId: string,
-  templateId: string,
-  variables: Record<string, string>,
-): ChannelExtra {
+export function feishuCardTarget(params: {
+  chatId: string;
+  templateId: string;
+  variables: Record<string, string>;
+  receiveIdType?: 'open_id' | 'chat_id' | 'user_id' | 'union_id';
+}): FeishuTarget {
   return {
-    chatId,
-    channel: 'feishu',
-    feishuType: 'card_template',
-    cardTemplate: { templateId, variables },
+    channel: 'feishu' as const,
+    feishuType: 'card_template' as const,
+    cardTemplate: { templateId: params.templateId, variables: params.variables },
+    chatId: params.chatId,
+    receiveIdType: params.receiveIdType,
   };
 }

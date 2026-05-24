@@ -1,4 +1,5 @@
 import { eventBus, EVENT_CHANNEL_SEND_MESSAGE } from '@krobert/events';
+import type { ChannelTarget } from '@krobert/events';
 import { HumanMessage } from '@langchain/core/messages';
 import { AgentState } from '../global';
 import {
@@ -9,6 +10,8 @@ import {
   TG_MESSAGE_THREAD_ID,
   formatTime,
   FEISHU_RSS_CARD_TEMPLATE_ID,
+  TELEGRAM_PERSONAL_CHAT_ID,
+  LARK_USER_OPEN_ID,
 } from '@krobert/utils';
 import { googleModelFactory } from '../../common/model';
 
@@ -23,6 +26,8 @@ export const analyzerNode = async (state: typeof AgentState.State) => {
   }
 
   logger.info('[RSSAgent] rssData retrieved, start analyzing');
+
+  const channels = state.channelExtra?.channels ?? ['telegram'];
 
   const llm = googleModelFactory();
 
@@ -67,16 +72,28 @@ export const analyzerNode = async (state: typeof AgentState.State) => {
   if (!response) {
     logger.error('[RSSAgent] analyzer invoke failed after retries', { error: lastError });
 
+    const errTargets: ChannelTarget[] = [];
+    for (const ch of channels) {
+      if (ch === 'telegram') {
+        errTargets.push({
+          channel: 'telegram',
+          chatId: TELEGRAM_PERSONAL_CHAT_ID,
+          threadId: TG_MESSAGE_THREAD_ID.NEWS_REPORT,
+        });
+      } else if (ch === 'feishu') {
+        const fsId = LARK_USER_OPEN_ID;
+        if (!fsId) continue;
+        errTargets.push({
+          channel: 'feishu',
+          chatId: fsId,
+          receiveIdType: 'open_id',
+        });
+      }
+    }
+
     eventBus.emit(EVENT_CHANNEL_SEND_MESSAGE, {
-      channel: state.channelExtra?.channel || 'telegram',
+      targets: errTargets,
       messages: ['❌ RSS 分析失败：Gemini API 在重试后仍无法返回结果，请稍后重试。'],
-      extra: {
-        channelExtra: {
-          chatId: state.channelExtra?.chatId,
-          threadId: state.channelExtra?.threadId ?? TG_MESSAGE_THREAD_ID.NEWS_REPORT,
-          replyToMessageId: state.channelExtra?.replyToMessageId,
-        },
-      },
     });
 
     throw lastError;
@@ -84,37 +101,41 @@ export const analyzerNode = async (state: typeof AgentState.State) => {
 
   // ─── Natural-language text (always present) ───
   const reportText = parseMessageContent(response.content);
-
-  const channel = state.channelExtra?.channel || 'telegram';
-  const isFeishu = channel === 'feishu';
   const category = state.categories[0] ?? 'General';
 
   logger.info(`[RSSAgent] analyzer invoke succeeded, report length: ${reportText.length}`);
 
-  eventBus.emit(EVENT_CHANNEL_SEND_MESSAGE, {
-    channel,
-    messages: [reportText],
-    extra: {
-      channelExtra: isFeishu
-        ? {
-            chatId: state.channelExtra?.chatId,
-            threadId: state.channelExtra?.threadId ?? TG_MESSAGE_THREAD_ID.NEWS_REPORT,
-            feishuType: 'card_template' as const,
-            cardTemplate: {
-              templateId: FEISHU_RSS_CARD_TEMPLATE_ID,
-              variables: {
-                title: `RSS 订阅流 - ${category}`,
-                date: formatTime(new Date(), { format: 'yyyy-MM-dd' }),
-                content: reportText,
-              },
-            },
-          }
-        : {
-            chatId: state.channelExtra?.chatId,
-            threadId: state.channelExtra?.threadId ?? TG_MESSAGE_THREAD_ID.NEWS_REPORT,
-            replyToMessageId: state.channelExtra?.replyToMessageId,
+  const targets: ChannelTarget[] = [];
+  for (const ch of channels) {
+    if (ch === 'telegram') {
+      targets.push({
+        channel: 'telegram',
+        chatId: TELEGRAM_PERSONAL_CHAT_ID,
+        threadId: TG_MESSAGE_THREAD_ID.NEWS_REPORT,
+        replyToMessageId: state.channelExtra?.replyToMessageId,
+      });
+    } else if (ch === 'feishu') {
+      if (!LARK_USER_OPEN_ID) continue;
+      targets.push({
+        channel: 'feishu',
+        chatId: LARK_USER_OPEN_ID,
+        receiveIdType: 'open_id',
+        feishuType: 'card_template',
+        cardTemplate: {
+          templateId: FEISHU_RSS_CARD_TEMPLATE_ID,
+          variables: {
+            title: `RSS 订阅流 - ${category}`,
+            date: formatTime(new Date(), { format: 'yyyy-MM-dd' }),
+            content: reportText,
           },
-    },
+        },
+      });
+    }
+  }
+
+  eventBus.emit(EVENT_CHANNEL_SEND_MESSAGE, {
+    targets,
+    messages: [reportText],
   });
 
   return { finalReport: reportText };
