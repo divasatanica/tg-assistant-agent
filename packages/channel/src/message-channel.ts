@@ -2,7 +2,7 @@ import { logger, TELEGRAM_PERSONAL_CHAT_ID } from '@krobert/utils';
 import { sendMarkdownMessage, sendRawMessage } from './telegram/message';
 import { bot } from './telegram/telegraf';
 import { feishuClient } from './feishu/index';
-import { sendFeishuMessage } from './feishu/message';
+import { sendFeishuMessage, sendPlainText, sendFeishuCardTemplate } from './feishu/message';
 import { eventBus, EVENT_CHANNEL_SEND_MESSAGE } from '@krobert/events';
 import type { ChannelSendMessagePayload } from '@krobert/events';
 import { sleep } from 'bun';
@@ -17,13 +17,13 @@ export function bootstrapChannelListener() {
 
     switch (channel) {
       case 'telegram': {
-        const { tgExtra = {} } = extra;
+        const { channelExtra = {} } = extra;
         const {
           raw = false,
           chatId = TELEGRAM_PERSONAL_CHAT_ID,
           threadId = undefined,
           replyToMessageId,
-        } = tgExtra;
+        } = channelExtra;
         const sender = raw ? sendRawMessage : sendMarkdownMessage;
 
         for (const message of messages) {
@@ -34,8 +34,8 @@ export function bootstrapChannelListener() {
         break;
       }
       case 'feishu': {
-        const { tgExtra = {} } = extra;
-        const { chatId, replyToMessageId } = tgExtra;
+        const { channelExtra = {} } = extra;
+        const { chatId, replyToMessageId, feishuType = 'message', cardTemplate } = channelExtra;
 
         if (!chatId) {
           logger.warn('[MessageChannel] Feishu message skipped: no chatId');
@@ -43,7 +43,22 @@ export function bootstrapChannelListener() {
         }
 
         for (const message of messages) {
-          await sendFeishuMessage(feishuClient, chatId, message, replyToMessageId as string);
+          if (feishuType === 'card_template') {
+            if (!cardTemplate?.templateId) {
+              logger.warn('[MessageChannel] Feishu card_template skipped: no templateId');
+              continue;
+            }
+            await sendFeishuCardTemplate(
+              feishuClient,
+              chatId,
+              cardTemplate.templateId,
+              cardTemplate.variables ?? {},
+            );
+          } else if (feishuType === 'plain_text') {
+            await sendPlainText(feishuClient, chatId, message);
+          } else {
+            await sendFeishuMessage(feishuClient, chatId, message, replyToMessageId as string);
+          }
           await sleep(800);
         }
         break;

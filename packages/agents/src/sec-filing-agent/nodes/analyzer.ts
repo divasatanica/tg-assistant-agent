@@ -50,18 +50,18 @@ export const analyzerNode = async (state: typeof AgentState.State) => {
     logger.error('[SEC Agent] Analyzer invoke failed after retries', { error: lastError });
 
     logger.debug('[SEC Agent] Emitting failure message to Telegram channel', {
-      threadId: state.tgExtra?.threadId,
-      chatId: state.tgExtra?.chatId,
+      threadId: state.channelExtra?.threadId,
+      chatId: state.channelExtra?.chatId,
     });
 
     eventBus.emit(EVENT_CHANNEL_SEND_MESSAGE, {
-      channel: state.tgExtra?.channel || 'telegram',
+      channel: state.channelExtra?.channel || 'telegram',
       messages: ['❌ SEC 分析失败：Gemini API 在 3 次重试后仍无法返回结果，请稍后重试。'],
       extra: {
-        tgExtra: {
-          chatId: state.tgExtra?.chatId,
-          threadId: state.tgExtra?.threadId ?? Number(TG_MESSAGE_THREAD_ID.SEC_FILING),
-          replyToMessageId: state.tgExtra?.replyToMessageId,
+        channelExtra: {
+          chatId: state.channelExtra?.chatId,
+          threadId: state.channelExtra?.threadId ?? Number(TG_MESSAGE_THREAD_ID.SEC_FILING),
+          replyToMessageId: state.channelExtra?.replyToMessageId,
         },
       },
     });
@@ -73,13 +73,13 @@ export const analyzerNode = async (state: typeof AgentState.State) => {
   logger.info(`[SEC Agent] Analysis complete, ${finalReport.length} chars`);
 
   eventBus.emit(EVENT_CHANNEL_SEND_MESSAGE, {
-    channel: state.tgExtra?.channel || 'telegram',
+    channel: state.channelExtra?.channel || 'telegram',
     messages: [finalReport],
     extra: {
-      tgExtra: {
-        chatId: state.tgExtra?.chatId,
-        threadId: state.tgExtra?.threadId ?? Number(TG_MESSAGE_THREAD_ID.SEC_FILING),
-        replyToMessageId: state.tgExtra?.replyToMessageId,
+      channelExtra: {
+        chatId: state.channelExtra?.chatId,
+        threadId: state.channelExtra?.threadId ?? Number(TG_MESSAGE_THREAD_ID.SEC_FILING),
+        replyToMessageId: state.channelExtra?.replyToMessageId,
       },
     },
   });

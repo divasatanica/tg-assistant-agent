@@ -37,16 +37,16 @@ Synthesize all the above into a concise advisory section:
 ## Output Format
 
 ```
-## 📰 Content Digest
+### 📰 Content Digest
 [Key information extracted from RSS data]
 
-## 📊 Market & Sector Landscape
+### 📊 Market & Sector Landscape
 [Markets and sectors identified with context]
 
-## 🧠 Blogger Sentiment Analysis
+### 🧠 Blogger Sentiment Analysis
 [Per-blogger breakdown of views and reasoning]
 
-## 🎯 Actionable Summary & Guidance
+### 🎯 Actionable Summary & Guidance
 - Consensus View: ...
 - Contrarian Signals: ...
 - Key Levels / Events to Watch: ...

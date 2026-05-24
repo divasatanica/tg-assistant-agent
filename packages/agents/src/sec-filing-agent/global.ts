@@ -24,7 +24,7 @@ export type { XbrlMetrics } from './xbrl-extractor';
 export interface TelegramMessageTarget {
   chatId?: string;
   threadId?: number;
-  replyToMessageId?: number;
+  replyToMessageId?: number | string;
   channel?: string;
 }
 
@@ -38,6 +38,6 @@ export const AgentState = Annotation.Root({
   filings: Annotation<Record<string, FilingMetadata[]>>(),
   sections: Annotation<Record<string, ParsedSection[]>>(),
   xbrlMetrics: Annotation<Record<string, XbrlMetrics[]>>(),
-  tgExtra: Annotation<TelegramMessageTarget | undefined>(),
+  channelExtra: Annotation<TelegramMessageTarget | undefined>(),
   finalReport: Annotation<string>(),
 });

@@ -16,7 +16,7 @@ export function bootstrapMarketSniffCron() {
         channel: 'telegram',
         messages: [positions],
         extra: {
-          tgExtra: {
+          channelExtra: {
             threadId: TG_MESSAGE_THREAD_ID.STOCK,
           },
         },

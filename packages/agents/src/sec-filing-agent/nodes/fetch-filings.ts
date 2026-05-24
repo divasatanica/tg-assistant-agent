@@ -135,15 +135,15 @@ export const fetchFilingsNode = async (state: typeof AgentState.State) => {
     logger.debug(`[SEC Agent] Collected URLs for ${ticker}: ${JSON.stringify(allUrls).length - 2}`);
   }
 
-  if (allUrls.length > 0 && state.tgExtra) {
+  if (allUrls.length > 0 && state.channelExtra) {
     eventBus.emit(EVENT_CHANNEL_SEND_MESSAGE, {
       channel: 'telegram',
       messages: allUrls,
       extra: {
-        tgExtra: {
-          chatId: state.tgExtra.chatId,
-          threadId: state.tgExtra.threadId,
-          replyToMessageId: state.tgExtra.replyToMessageId,
+        channelExtra: {
+          chatId: state.channelExtra.chatId,
+          threadId: state.channelExtra.threadId,
+          replyToMessageId: state.channelExtra.replyToMessageId,
         },
       },
     });

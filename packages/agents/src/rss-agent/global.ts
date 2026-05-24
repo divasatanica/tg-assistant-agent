@@ -9,7 +9,7 @@ export const model = googleModelFactory();
 export interface TelegramMessageTarget {
   chatId?: string;
   threadId?: number;
-  replyToMessageId?: number;
+  replyToMessageId?: string | number;
   channel?: string;
 }
 
@@ -26,5 +26,5 @@ export const AgentState = Annotation.Root({
   // 初始注入的要分析的订阅类目
   categories: Annotation<string[]>(),
   // Telegram 消息目标信息（chatId、threadId、replyToMessageId），cron 触发时为 undefined
-  tgExtra: Annotation<TelegramMessageTarget | undefined>(),
+  channelExtra: Annotation<TelegramMessageTarget | undefined>(),
 });

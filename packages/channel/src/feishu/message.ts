@@ -60,13 +60,35 @@ export async function sendFeishuMessage(
   }
 }
 
-async function sendPlainText(client: Client, chatId: string, text: string): Promise<void> {
+export async function sendPlainText(client: Client, chatId: string, text: string): Promise<void> {
   await client.im.message.create({
     params: { receive_id_type: 'chat_id' },
     data: {
       receive_id: chatId,
       msg_type: 'text',
       content: JSON.stringify({ text: text.slice(0, 30000) }),
+    },
+  });
+}
+
+export async function sendFeishuCardTemplate(
+  client: Client,
+  chatId: string,
+  templateId: string,
+  variables: Record<string, string>,
+): Promise<void> {
+  await client.im.message.create({
+    params: { receive_id_type: 'chat_id' },
+    data: {
+      receive_id: chatId,
+      msg_type: 'interactive',
+      content: JSON.stringify({
+        type: 'template',
+        data: {
+          template_id: templateId,
+          template_variable: variables,
+        },
+      }),
     },
   });
 }

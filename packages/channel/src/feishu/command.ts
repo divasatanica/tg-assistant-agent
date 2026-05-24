@@ -172,7 +172,7 @@ export async function handleFeishuMessage(client: Client, event: FeishuMessageEv
     const category = rsssumMatch[1].trim();
     eventBus.emit(EVENT_AGENT_RSS_SUM, {
       category,
-      tgExtra: {
+      channelExtra: {
         chatId,
         replyToMessageId: messageId,
         channel: 'feishu',
@@ -191,7 +191,7 @@ export async function handleFeishuMessage(client: Client, event: FeishuMessageEv
     }
     eventBus.emit(EVENT_AGENT_SEC, {
       symbol,
-      tgExtra: {
+      channelExtra: {
         chatId,
         replyToMessageId: messageId,
         channel: 'feishu',

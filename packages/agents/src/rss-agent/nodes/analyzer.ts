@@ -1,12 +1,16 @@
 import { eventBus, EVENT_CHANNEL_SEND_MESSAGE } from '@krobert/events';
-import { AgentState, model } from '../global';
+import { HumanMessage } from '@langchain/core/messages';
+import { AgentState } from '../global';
 import {
   logger,
   parseMessageContent,
   RSS_ANALYZER_MAX_RETRY_TIMES,
   RSS_ANALYZER_RETRY_BASE_DELAY_MS,
   TG_MESSAGE_THREAD_ID,
+  formatTime,
+  FEISHU_RSS_CARD_TEMPLATE_ID,
 } from '@krobert/utils';
+import { googleModelFactory } from '../../common/model';
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -20,6 +24,8 @@ export const analyzerNode = async (state: typeof AgentState.State) => {
 
   logger.info('[RSSAgent] rssData retrieved, start analyzing');
 
+  const llm = googleModelFactory();
+
   const context = JSON.stringify(state.rssData);
   const maxRetries =
     Number.isFinite(RSS_ANALYZER_MAX_RETRY_TIMES) && RSS_ANALYZER_MAX_RETRY_TIMES >= 0
@@ -30,17 +36,18 @@ export const analyzerNode = async (state: typeof AgentState.State) => {
       ? RSS_ANALYZER_RETRY_BASE_DELAY_MS
       : 1000;
 
-  let response: Awaited<ReturnType<typeof model.invoke>> | null = null;
+  let response: Awaited<ReturnType<typeof llm.invoke>> | null = null;
   let lastError: unknown;
 
   for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
     try {
       logger.info(
-        `[RSSAgent] analyzer invoke attempt ${attempt + 1}/${maxRetries + 1}, context length: ${context.length}`,
+        `[RSSAgent] analyzer invoke attempt ${attempt + 1}/${maxRetries + 1}, ` +
+          `context length: ${context.length}`,
       );
-      response = await model.invoke([
+      response = await llm.invoke([
         ...(state.messages || []),
-        ['user', `Here's fetched feeds organized by category as JSON format: ${context}`],
+        new HumanMessage(`Here's fetched feeds organized by category as JSON format: ${context}`),
       ]);
       break;
     } catch (error) {
@@ -61,13 +68,13 @@ export const analyzerNode = async (state: typeof AgentState.State) => {
     logger.error('[RSSAgent] analyzer invoke failed after retries', { error: lastError });
 
     eventBus.emit(EVENT_CHANNEL_SEND_MESSAGE, {
-      channel: state.tgExtra?.channel || 'telegram',
+      channel: state.channelExtra?.channel || 'telegram',
       messages: ['❌ RSS 分析失败：Gemini API 在重试后仍无法返回结果，请稍后重试。'],
       extra: {
-        tgExtra: {
-          chatId: state.tgExtra?.chatId,
-          threadId: state.tgExtra?.threadId ?? TG_MESSAGE_THREAD_ID.NEWS_REPORT,
-          replyToMessageId: state.tgExtra?.replyToMessageId,
+        channelExtra: {
+          chatId: state.channelExtra?.chatId,
+          threadId: state.channelExtra?.threadId ?? TG_MESSAGE_THREAD_ID.NEWS_REPORT,
+          replyToMessageId: state.channelExtra?.replyToMessageId,
         },
       },
     });
@@ -75,17 +82,40 @@ export const analyzerNode = async (state: typeof AgentState.State) => {
     throw lastError;
   }
 
+  // ─── Natural-language text (always present) ───
+  const reportText = parseMessageContent(response.content);
+
+  const channel = state.channelExtra?.channel || 'telegram';
+  const isFeishu = channel === 'feishu';
+  const category = state.categories[0] ?? 'General';
+
+  logger.info(`[RSSAgent] analyzer invoke succeeded, report length: ${reportText.length}`);
+
   eventBus.emit(EVENT_CHANNEL_SEND_MESSAGE, {
-    channel: state.tgExtra?.channel || 'telegram',
-    messages: [parseMessageContent(response.content)],
+    channel,
+    messages: [reportText],
     extra: {
-      tgExtra: {
-        chatId: state.tgExtra?.chatId,
-        threadId: state.tgExtra?.threadId ?? TG_MESSAGE_THREAD_ID.NEWS_REPORT,
-        replyToMessageId: state.tgExtra?.replyToMessageId,
-      },
+      channelExtra: isFeishu
+        ? {
+            chatId: state.channelExtra?.chatId,
+            threadId: state.channelExtra?.threadId ?? TG_MESSAGE_THREAD_ID.NEWS_REPORT,
+            feishuType: 'card_template' as const,
+            cardTemplate: {
+              templateId: FEISHU_RSS_CARD_TEMPLATE_ID,
+              variables: {
+                title: `RSS 订阅流 - ${category}`,
+                date: formatTime(new Date(), { format: 'yyyy-MM-dd' }),
+                content: reportText,
+              },
+            },
+          }
+        : {
+            chatId: state.channelExtra?.chatId,
+            threadId: state.channelExtra?.threadId ?? TG_MESSAGE_THREAD_ID.NEWS_REPORT,
+            replyToMessageId: state.channelExtra?.replyToMessageId,
+          },
     },
   });
 
-  return { finalReport: parseMessageContent(response.content) };
+  return { finalReport: reportText };
 };

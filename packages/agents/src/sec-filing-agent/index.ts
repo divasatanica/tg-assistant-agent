@@ -34,7 +34,7 @@ const workflow = new StateGraph(AgentState)
 const app = workflow.compile();
 
 interface RunSecFilingAgentOptions {
-  tgExtra?: TelegramMessageTarget;
+  channelExtra?: TelegramMessageTarget;
 }
 
 export async function runAgent(
@@ -56,7 +56,7 @@ export async function runAgent(
     tickers,
     formTypes,
     maxFilingsPerTicker,
-    tgExtra: options.tgExtra,
+    channelExtra: options.channelExtra,
   });
 
   const result = await app.invoke({
@@ -69,28 +69,28 @@ export async function runAgent(
     tickers,
     formTypes,
     maxFilingsPerTicker,
-    tgExtra: options.tgExtra,
+    channelExtra: options.channelExtra,
   });
 
-  // 如果没有找到任何文件且指定了 tgExtra，则在 Agent 自身内部发送通知消息
+  // 如果没有找到任何文件且指定了 channelExtra，则在 Agent 自身内部发送通知消息
   const hasFilings =
     Object.values((result.filings ?? {}) as Record<string, unknown[]>).flat().length > 0;
-  if (!hasFilings && options.tgExtra) {
+  if (!hasFilings && options.channelExtra) {
     const noFilingsMsg = `⚠️ 未找到 ${tickers.join(', ')} 可分析的 SEC 文件。`;
     logger.info(`[SEC Agent] No filings found for ${tickers.join(', ')}, sending notification`);
 
     logger.debug('[SEC Agent] Emitting no filings message to Telegram channel', {
-      threadId: options.tgExtra.threadId,
-      chatId: options.tgExtra.chatId,
+      threadId: options.channelExtra.threadId,
+      chatId: options.channelExtra.chatId,
     });
     eventBus.emit(EVENT_CHANNEL_SEND_MESSAGE, {
-      channel: options.tgExtra.channel || 'telegram',
+      channel: options.channelExtra.channel || 'telegram',
       messages: [noFilingsMsg],
       extra: {
-        tgExtra: {
-          chatId: options.tgExtra.chatId,
-          threadId: options.tgExtra.threadId,
-          replyToMessageId: options.tgExtra.replyToMessageId,
+        channelExtra: {
+          chatId: options.channelExtra.chatId,
+          threadId: options.channelExtra.threadId,
+          replyToMessageId: options.channelExtra.replyToMessageId,
         },
       },
     });

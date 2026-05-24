@@ -103,7 +103,7 @@ export function registerCommandHandler(bot: Telegraf) {
 
     eventBus.emit(EVENT_AGENT_RSS_SUM, {
       category: match[1].trim(),
-      tgExtra: {
+      channelExtra: {
         chatId: String(ctx.chat.id),
         threadId: ctx.message.message_thread_id,
         replyToMessageId: ctx.message.message_id,
@@ -127,7 +127,7 @@ export function registerCommandHandler(bot: Telegraf) {
 
     eventBus.emit(EVENT_AGENT_SEC, {
       symbol,
-      tgExtra: {
+      channelExtra: {
         chatId: String(ctx.chat.id),
         threadId: ctx.message.message_thread_id,
         replyToMessageId: ctx.message.message_id,

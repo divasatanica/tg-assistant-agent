@@ -91,12 +91,12 @@ export const scraperNode = async (state: typeof AgentState.State) => {
 
   // logger.debug('[RSSAgent] concatedData', concatedData);
   eventBus.emit(EVENT_CHANNEL_SEND_MESSAGE, {
-    channel: state.tgExtra?.channel || 'telegram',
+    channel: state.channelExtra?.channel || 'telegram',
     messages: [`已抓取类别: ${categories.join(', ')}`],
     extra: {
-      tgExtra: {
-        chatId: state.tgExtra?.chatId ?? TELEGRAM_PERSONAL_CHAT_ID,
-        threadId: state.tgExtra?.threadId ?? Number(TG_MESSAGE_THREAD_ID.NEWS_REPORT),
+      channelExtra: {
+        chatId: state.channelExtra?.chatId ?? TELEGRAM_PERSONAL_CHAT_ID,
+        threadId: state.channelExtra?.threadId ?? Number(TG_MESSAGE_THREAD_ID.NEWS_REPORT),
       },
     },
   });
@@ -106,12 +106,12 @@ export const scraperNode = async (state: typeof AgentState.State) => {
   const messages = Object.keys(messageSummary).map((key) => messageSummary[key]);
 
   eventBus.emit(EVENT_CHANNEL_SEND_MESSAGE, {
-    channel: state.tgExtra?.channel || 'telegram',
+    channel: state.channelExtra?.channel || 'telegram',
     messages,
     extra: {
-      tgExtra: {
-        chatId: state.tgExtra?.chatId,
-        threadId: state.tgExtra?.threadId ?? TG_MESSAGE_THREAD_ID.NEWS_REPORT,
+      channelExtra: {
+        chatId: state.channelExtra?.chatId,
+        threadId: state.channelExtra?.threadId ?? TG_MESSAGE_THREAD_ID.NEWS_REPORT,
       },
     },
   });

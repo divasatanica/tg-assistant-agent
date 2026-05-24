@@ -37,7 +37,7 @@ export async function runAgent(city: string, icao: string) {
     channel: 'telegram',
     messages: [result.rawBrowserData as string],
     extra: {
-      tgExtra: {
+      channelExtra: {
         chatId: process.env.TG_PERSONAL_CHAT_ID!,
         threadId: Number(process.env.TG_WEATHER_THREAD_ID!),
       },
