@@ -1,6 +1,7 @@
 import { Telegraf, Markup } from 'telegraf';
 import { rssDB } from '@krobert/utils/sqlite/sqlite';
 import { eventBus, EVENT_AGENT_RSS_SUM, EVENT_AGENT_SEC } from '@krobert/events';
+import { TG_MESSAGE_THREAD_ID } from '@krobert/utils';
 
 // 临时存储待选类别的订阅信息 (避免 callback_data 长度超过 64 bytes)
 const pendingSubs = new Map<
@@ -130,8 +131,8 @@ export function registerCommandHandler(bot: Telegraf) {
       symbol,
       channelExtra: {
         chatId: String(ctx.chat.id),
-        threadId: ctx.message.message_thread_id,
-        replyToMessageId: ctx.message.message_id,
+        threadId: Number(TG_MESSAGE_THREAD_ID.SEC_FILING),
+        replyToMessageId: void 0,
         channels: ['telegram'],
       },
     });
