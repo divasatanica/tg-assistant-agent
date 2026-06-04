@@ -3,20 +3,31 @@ import { SystemMessage } from '@langchain/core/messages';
 import { readFileSync } from 'fs';
 import { AgentState, TelegramMessageTarget } from './global';
 import { scraperNode } from './nodes/scraper';
+import { summarizerNode } from './nodes/summarizer';
+import { keywordsNode } from './nodes/keywords';
 import { analyzerNode } from './nodes/analyzer';
 import { join } from 'path';
 import { formatTime } from '@krobert/utils';
 
+function routeAfterScraper(state: typeof AgentState.State): 'summarizer' | 'analyzer' {
+  const isNews = state.categories?.[0] === 'News';
+  return isNews ? 'summarizer' : 'analyzer';
+}
+
 const workflow = new StateGraph(AgentState);
 workflow
-  // 1. 添加节点
   .addNode('scraper', scraperNode)
+  .addNode('summarizer', summarizerNode)
+  .addNode('keyword-extractor', keywordsNode)
   .addNode('analyzer', analyzerNode)
 
-  // 2. 设定连线逻辑
-  .addEdge(START, 'scraper') // 从开始到抓取
-  .addEdge('scraper', 'analyzer')
-  // 分析完后，走第二次播报
+  .addEdge(START, 'scraper')
+  .addConditionalEdges('scraper', routeAfterScraper, {
+    summarizer: 'summarizer',
+    analyzer: 'analyzer',
+  })
+  .addEdge('summarizer', 'keyword-extractor')
+  .addEdge('keyword-extractor', 'analyzer')
   .addEdge('analyzer', END);
 
 // 3. 编译成可执行的 App

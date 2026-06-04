@@ -9,7 +9,7 @@ import { sleep } from 'bun';
 
 export function bootstrapChannelListener() {
   eventBus.on(EVENT_CHANNEL_SEND_MESSAGE, async (payload: ChannelSendMessagePayload) => {
-    logger.debug('[MessageChannel] Received message send request:', payload);
+    // logger.debug('[MessageChannel] Received message send request:', payload);
     const { targets = [], messages = [] } = payload;
     if (messages.length === 0 || targets.length === 0) {
       return;
@@ -28,7 +28,7 @@ export function bootstrapChannelListener() {
 
           for (const message of messages) {
             const result = await sender(bot, chatId, message, threadId, Number(replyToMessageId));
-            logger.debug('[MessageChannel] message sent result:', result);
+            // logger.debug('[MessageChannel] message sent result:', result);
             await sleep(1000);
           }
           break;

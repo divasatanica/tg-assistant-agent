@@ -45,7 +45,7 @@ const filterTooOld = (category: string) => (item: Parser.Item) => {
   const diff = now.getTime() - pubDate.getTime();
   const TTLDays =
     {
-      News: 2,
+      News: 1.5,
       Blog: 7,
       General: 7,
     }[category] || 7;
@@ -116,7 +116,7 @@ export const scraperNode = async (state: typeof AgentState.State) => {
   });
 
   const messageSummary = formatNewList(concatedData);
-  logger.debug('[RSSAgent] messageSummary', messageSummary);
+  // logger.debug('[RSSAgent] messageSummary', messageSummary);
   const messages = Object.keys(messageSummary).map((key) => messageSummary[key]);
 
   eventBus.emit(EVENT_CHANNEL_SEND_MESSAGE, {

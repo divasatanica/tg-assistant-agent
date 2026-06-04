@@ -1,7 +1,7 @@
 import { eventBus, EVENT_CHANNEL_SEND_MESSAGE } from '@krobert/events';
 import type { ChannelTarget } from '@krobert/events';
 import { HumanMessage } from '@langchain/core/messages';
-import { AgentState } from '../global';
+import { AgentState, analyzerModel } from '../global';
 import {
   logger,
   parseMessageContent,
@@ -13,7 +13,6 @@ import {
   TELEGRAM_PERSONAL_CHAT_ID,
   LARK_USER_OPEN_ID,
 } from '@krobert/utils';
-import { googleModelFactory } from '../../common/model';
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -29,9 +28,14 @@ export const analyzerNode = async (state: typeof AgentState.State) => {
 
   const channels = state.channelExtra?.channels ?? ['telegram'];
 
-  const llm = googleModelFactory();
+  const hasSummaries = state.articleSummaries && Object.keys(state.articleSummaries).length > 0;
 
-  const context = JSON.stringify(state.rssData);
+  const context = hasSummaries
+    ? JSON.stringify({
+        articleSummaries: state.articleSummaries,
+        keywords: state.keywords,
+      })
+    : JSON.stringify(state.rssData);
   const maxRetries =
     Number.isFinite(RSS_ANALYZER_MAX_RETRY_TIMES) && RSS_ANALYZER_MAX_RETRY_TIMES >= 0
       ? Math.floor(RSS_ANALYZER_MAX_RETRY_TIMES)
@@ -41,7 +45,7 @@ export const analyzerNode = async (state: typeof AgentState.State) => {
       ? RSS_ANALYZER_RETRY_BASE_DELAY_MS
       : 1000;
 
-  let response: Awaited<ReturnType<typeof llm.invoke>> | null = null;
+  let response: Awaited<ReturnType<typeof analyzerModel.invoke>> | null = null;
   let lastError: unknown;
 
   for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
@@ -50,9 +54,13 @@ export const analyzerNode = async (state: typeof AgentState.State) => {
         `[RSSAgent] analyzer invoke attempt ${attempt + 1}/${maxRetries + 1}, ` +
           `context length: ${context.length}`,
       );
-      response = await llm.invoke([
+      response = await analyzerModel.invoke([
         ...(state.messages || []),
-        new HumanMessage(`Here's fetched feeds organized by category as JSON format: ${context}`),
+        new HumanMessage(
+          hasSummaries
+            ? `Here are summarized articles and keywords for analysis:\n\n${context}`
+            : `Here's fetched feeds organized by category as JSON format: ${context}`,
+        ),
       ]);
       break;
     } catch (error) {
@@ -99,9 +107,16 @@ export const analyzerNode = async (state: typeof AgentState.State) => {
     throw lastError;
   }
 
-  // ─── Natural-language text (always present) ───
-  const reportText = parseMessageContent(response.content);
+  let reportText = parseMessageContent(response.content);
   const category = state.categories[0] ?? 'General';
+  const keywords = state.keywords ?? [];
+
+  logger.debug(`[RSSAgent] keywords: ${keywords.join(', ')}`);
+
+  if (keywords.length > 0) {
+    const keywordLine = `**关键词**: ${keywords.join('、')}`;
+    reportText = `${keywordLine}\n\n${reportText}`;
+  }
 
   logger.info(`[RSSAgent] analyzer invoke succeeded, report length: ${reportText.length}`);
 

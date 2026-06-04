@@ -4,7 +4,12 @@ import Parser from 'rss-parser';
 
 import { googleModelFactory } from '../common/model';
 
-export const model = googleModelFactory();
+export interface ArticleSummary {
+  title: string;
+  link: string;
+  summary: string;
+  pubDate?: string;
+}
 
 export interface TelegramMessageTarget {
   chatId?: string;
@@ -14,6 +19,20 @@ export interface TelegramMessageTarget {
   receiveIdType?: 'open_id' | 'chat_id' | 'user_id' | 'union_id';
 }
 
+const isDev = process.env.NODE_ENV === 'development';
+
+export const summarizerModel = googleModelFactory(
+  isDev ? 'gemma-4-26b-a4b-it' : process.env.RSS_SUMMARIZER_MODEL || 'gemma-4-26b-a4b-it',
+);
+
+export const keywordModel = googleModelFactory(
+  isDev ? 'gemma-4-26b-a4b-it' : process.env.RSS_KEYWORD_MODEL || 'gemma-4-26b-a4b-it',
+);
+
+export const analyzerModel = googleModelFactory(
+  isDev ? 'gemma-4-26b-a4b-it' : process.env.RSS_ANALYZER_MODEL || 'gemini-3.5-flash',
+);
+
 // 定义全局状态架构
 export const AgentState = Annotation.Root({
   // 存储对话消息流
@@ -22,6 +41,10 @@ export const AgentState = Annotation.Root({
   }),
   // 存储抓取到的原始 RSS 数据
   rssData: Annotation<Record<string, Parser.Output<any>[]>>(),
+  // 每篇文章的浓缩摘要
+  articleSummaries: Annotation<Record<string, ArticleSummary[]>>(),
+  // 从所有摘要中提取的关键词
+  keywords: Annotation<string[]>(),
   // 最终生成的分析报告
   finalReport: Annotation<string>(),
   // 初始注入的要分析的订阅类目
