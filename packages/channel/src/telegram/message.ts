@@ -15,14 +15,19 @@ export function sendMarkdownMessage(
   bot: Telegraf,
   chatId: string,
   message: string,
-  messageThreadId?: number,
-  replyToMessageId?: number,
+  messageThreadId?: number | string,
+  replyToMessageId?: number | string,
 ) {
   return bot.telegram.sendMessage(chatId, wrapMarkdownMessage(message), {
-    message_thread_id: messageThreadId,
+    message_thread_id: Number(messageThreadId),
     parse_mode: 'HTML',
     ...(replyToMessageId
-      ? { reply_parameters: { message_id: replyToMessageId, allow_sending_without_reply: true } }
+      ? {
+          reply_parameters: {
+            message_id: Number(replyToMessageId),
+            allow_sending_without_reply: true,
+          },
+        }
       : {}),
   });
 }
@@ -31,11 +36,11 @@ export function sendRawMessage(
   bot: Telegraf,
   chatId: string,
   message: string,
-  messageThreadId?: number,
+  messageThreadId?: number | string,
   replyToMessageId?: number,
 ) {
   return bot.telegram.sendMessage(chatId, message, {
-    message_thread_id: messageThreadId,
+    message_thread_id: Number(messageThreadId),
     ...(replyToMessageId
       ? { reply_parameters: { message_id: replyToMessageId, allow_sending_without_reply: true } }
       : {}),

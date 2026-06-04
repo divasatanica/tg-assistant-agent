@@ -1,20 +1,17 @@
 import { rssDB } from '@krobert/utils/sqlite/sqlite';
 import {
-  EVENT_MESSAGE_CHANNEL_SEND_MESSAGE,
   formatTime,
   logger,
-  MESSAGE_CHANNEL,
   TELEGRAM_PERSONAL_CHAT_ID,
   TG_MESSAGE_THREAD_ID,
+  LARK_USER_OPEN_ID,
 } from '@krobert/utils';
-import { messageChannel } from '@krobert/channel/message-channel';
+import { eventBus, EVENT_CHANNEL_SEND_MESSAGE } from '@krobert/events';
+import type { ChannelTarget } from '@krobert/events';
 
 import { AgentState } from '../global';
 import { fetchAndParseRSS, resolveRssFeed } from '@krobert/function-tools/rss-feed';
 import Parser from 'rss-parser';
-
-import { sendRawMessage } from '@krobert/channel/telegram/message';
-import { bot } from '@krobert/channel/telegram/telegraf';
 
 function formatNewList(rssData: Record<string, any[]>) {
   const output = {} as Record<string, string>;
@@ -63,7 +60,7 @@ export const scraperNode = async (state: typeof AgentState.State) => {
   const categories = state.categories;
   const rssList = _rssList.filter((rss) => categories.includes(rss.category!));
 
-  logger.info('[RSSAgent] rsslist', rssList);
+  // logger.debug('[RSSAgent] rsslist', rssList);
 
   const data = await Promise.all(
     rssList.map(async (rss) => {
@@ -94,27 +91,37 @@ export const scraperNode = async (state: typeof AgentState.State) => {
     {} as Record<string, Array<Parser.Output<any>>>,
   );
 
-  logger.debug('[RSSAgent] concatedData', concatedData);
-  await sendRawMessage(
-    bot,
-    state.tgExtra?.chatId ?? TELEGRAM_PERSONAL_CHAT_ID,
-    `已抓取类别: ${categories.join(', ')}`,
-    state.tgExtra?.threadId ?? Number(TG_MESSAGE_THREAD_ID.NEWS_REPORT),
-  );
+  const channels = state.channelExtra?.channels ?? ['telegram'];
+  const targets: ChannelTarget[] = [];
+  for (const ch of channels) {
+    if (ch === 'telegram') {
+      targets.push({
+        channel: 'telegram',
+        chatId: TELEGRAM_PERSONAL_CHAT_ID,
+        threadId: Number(TG_MESSAGE_THREAD_ID.NEWS_REPORT),
+      });
+    } else if (ch === 'feishu') {
+      if (!LARK_USER_OPEN_ID) continue;
+      targets.push({
+        channel: 'feishu',
+        chatId: LARK_USER_OPEN_ID,
+        receiveIdType: 'open_id',
+      });
+    }
+  }
+
+  eventBus.emit(EVENT_CHANNEL_SEND_MESSAGE, {
+    targets,
+    messages: [`已抓取类别: ${categories.join(', ')}`],
+  });
 
   const messageSummary = formatNewList(concatedData);
   logger.debug('[RSSAgent] messageSummary', messageSummary);
   const messages = Object.keys(messageSummary).map((key) => messageSummary[key]);
 
-  messageChannel.emit(EVENT_MESSAGE_CHANNEL_SEND_MESSAGE, {
-    channel: MESSAGE_CHANNEL.TELEGRAM,
+  eventBus.emit(EVENT_CHANNEL_SEND_MESSAGE, {
+    targets,
     messages,
-    extra: {
-      tgExtra: {
-        chatId: state.tgExtra?.chatId,
-        threadId: state.tgExtra?.threadId ?? TG_MESSAGE_THREAD_ID.NEWS_REPORT,
-      },
-    },
   });
 
   return { rssData: concatedData };

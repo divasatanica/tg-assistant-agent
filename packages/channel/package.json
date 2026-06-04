@@ -12,7 +12,7 @@
     "telegraf": "^4.16.3",
     "markdown-it": "^14.1.1",
     "@krobert/utils": "*",
-    "@krobert/agents": "*"
+    "@krobert/events": "*"
   },
   "devDependencies": {
     "@types/markdown-it": "^14.1.2"

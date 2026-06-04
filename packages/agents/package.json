@@ -20,6 +20,6 @@
     "zod": "^4.3.6",
     "@krobert/utils": "*",
     "@krobert/function-tools": "*",
-    "@krobert/channel": "*"
+    "@krobert/events": "*"
   }
 }

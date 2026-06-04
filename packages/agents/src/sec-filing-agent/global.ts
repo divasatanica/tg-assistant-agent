@@ -24,7 +24,9 @@ export type { XbrlMetrics } from './xbrl-extractor';
 export interface TelegramMessageTarget {
   chatId?: string;
   threadId?: number;
-  replyToMessageId?: number;
+  replyToMessageId?: number | string;
+  channels?: Array<'telegram' | 'feishu'>;
+  receiveIdType?: 'open_id' | 'chat_id' | 'user_id' | 'union_id';
 }
 
 export const AgentState = Annotation.Root({
@@ -37,6 +39,6 @@ export const AgentState = Annotation.Root({
   filings: Annotation<Record<string, FilingMetadata[]>>(),
   sections: Annotation<Record<string, ParsedSection[]>>(),
   xbrlMetrics: Annotation<Record<string, XbrlMetrics[]>>(),
-  tgExtra: Annotation<TelegramMessageTarget | undefined>(),
+  channelExtra: Annotation<TelegramMessageTarget | undefined>(),
   finalReport: Annotation<string>(),
 });

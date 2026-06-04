@@ -22,7 +22,7 @@ workflow
 // 3. 编译成可执行的 App
 const app = workflow.compile();
 
-export async function runAgent(category: string, tgExtra?: TelegramMessageTarget) {
+export async function runAgent(category: string, channelExtra?: TelegramMessageTarget) {
   const categories = [category];
   const systemPrompts = categories.map((category) => {
     const systemPrompt = readFileSync(join(__dirname, `system-prompt-${category}.md`), 'utf-8');
@@ -36,7 +36,7 @@ export async function runAgent(category: string, tgExtra?: TelegramMessageTarget
       ),
     ],
     categories,
-    tgExtra,
+    channelExtra,
   });
 
   return {

@@ -3,6 +3,7 @@
   "include": [],
   "references": [
     { "path": "./packages/utils" },
+    { "path": "./packages/events" },
     { "path": "./packages/function-tools" },
     { "path": "./packages/channel" },
     { "path": "./packages/agents" },

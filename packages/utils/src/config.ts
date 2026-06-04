@@ -30,3 +30,6 @@ export const TG_MESSAGE_THREAD_ID = {
   STOCK: process.env.TG_STOCK_THREAD_ID!,
   SEC_FILING: process.env.TG_SEC_FILING_THREAD_ID!,
 } as const;
+
+export const LARK_APP_ID = process.env.LARK_APP_ID!;
+export const LARK_APP_SECRET = process.env.LARK_APP_SECRET!;

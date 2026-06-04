@@ -8,6 +8,6 @@
   "references": [
     { "path": "../utils" },
     { "path": "../function-tools" },
-    { "path": "../channel" }
+    { "path": "../events" }
   ]
 }

@@ -1,13 +1,14 @@
 import cron from 'node-cron';
 import {
-  EVENT_MESSAGE_CHANNEL_SEND_MESSAGE,
   formatPositions,
   logger,
   longBridgeClient,
-  MESSAGE_CHANNEL,
   TG_MESSAGE_THREAD_ID,
+  TELEGRAM_PERSONAL_CHAT_ID,
+  LARK_USER_OPEN_ID,
 } from '@krobert/utils';
-import { messageChannel } from '@krobert/channel/message-channel';
+import { eventBus, EVENT_CHANNEL_SEND_MESSAGE } from '@krobert/events';
+import type { ChannelTarget } from '@krobert/events';
 
 export function bootstrapMarketSniffCron() {
   logger.info('[Cron] Bootstrapping Market Sniff daily task (Scheduled for 9:30 AM GMT-4)...');
@@ -19,14 +20,28 @@ export function bootstrapMarketSniffCron() {
       logger.info('[Cron] Execution started: (9:30 AM GMT-4)...');
       const positions = await formatPositions();
 
-      messageChannel.emit(EVENT_MESSAGE_CHANNEL_SEND_MESSAGE, {
-        channel: MESSAGE_CHANNEL.TELEGRAM,
-        messages: [positions],
-        extra: {
-          tgExtra: {
+      const channels: Array<'telegram' | 'feishu'> = ['telegram'];
+      const targets: ChannelTarget[] = [];
+      for (const ch of channels) {
+        if (ch === 'telegram') {
+          targets.push({
+            channel: 'telegram',
+            chatId: TELEGRAM_PERSONAL_CHAT_ID,
             threadId: TG_MESSAGE_THREAD_ID.STOCK,
-          },
-        },
+          });
+        } else if (ch === 'feishu') {
+          if (!LARK_USER_OPEN_ID) continue;
+          targets.push({
+            channel: 'feishu',
+            chatId: LARK_USER_OPEN_ID,
+            receiveIdType: 'open_id',
+          });
+        }
+      }
+
+      eventBus.emit(EVENT_CHANNEL_SEND_MESSAGE, {
+        targets,
+        messages: [positions],
       });
     },
     {

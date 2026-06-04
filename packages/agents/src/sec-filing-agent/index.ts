@@ -4,11 +4,13 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import {
   formatTime,
-  EVENT_MESSAGE_CHANNEL_SEND_MESSAGE,
-  MESSAGE_CHANNEL,
   logger,
+  TELEGRAM_PERSONAL_CHAT_ID,
+  LARK_USER_OPEN_ID,
+  TG_MESSAGE_THREAD_ID,
 } from '@krobert/utils';
-import { messageChannel } from '@krobert/channel/message-channel';
+import { eventBus, EVENT_CHANNEL_SEND_MESSAGE } from '@krobert/events';
+import type { ChannelTarget } from '@krobert/events';
 import { AgentState } from './global';
 import { fetchFilingsNode } from './nodes/fetch-filings';
 import { extractSectionsNode } from './nodes/extract-sections';
@@ -39,7 +41,7 @@ const workflow = new StateGraph(AgentState)
 const app = workflow.compile();
 
 interface RunSecFilingAgentOptions {
-  tgExtra?: TelegramMessageTarget;
+  channelExtra?: TelegramMessageTarget;
 }
 
 export async function runAgent(
@@ -61,7 +63,7 @@ export async function runAgent(
     tickers,
     formTypes,
     maxFilingsPerTicker,
-    tgExtra: options.tgExtra,
+    channelExtra: options.channelExtra,
   });
 
   const result = await app.invoke({
@@ -74,30 +76,39 @@ export async function runAgent(
     tickers,
     formTypes,
     maxFilingsPerTicker,
-    tgExtra: options.tgExtra,
+    channelExtra: options.channelExtra,
   });
 
-  // 如果没有找到任何文件且指定了 tgExtra，则在 Agent 自身内部发送通知消息
+  // 如果没有找到任何文件且指定了 channelExtra，则在 Agent 自身内部发送通知消息
   const hasFilings =
     Object.values((result.filings ?? {}) as Record<string, unknown[]>).flat().length > 0;
-  if (!hasFilings && options.tgExtra) {
+  if (!hasFilings && options.channelExtra) {
     const noFilingsMsg = `⚠️ 未找到 ${tickers.join(', ')} 可分析的 SEC 文件。`;
     logger.info(`[SEC Agent] No filings found for ${tickers.join(', ')}, sending notification`);
 
-    logger.debug('[SEC Agent] Emitting no filings message to Telegram channel', {
-      threadId: options.tgExtra.threadId,
-      chatId: options.tgExtra.chatId,
-    });
-    messageChannel.emit(EVENT_MESSAGE_CHANNEL_SEND_MESSAGE, {
-      channel: MESSAGE_CHANNEL.TELEGRAM,
+    logger.debug('[SEC Agent] Emitting no filings message');
+    const channels = options.channelExtra.channels ?? ['telegram'];
+    const targets: ChannelTarget[] = [];
+    for (const ch of channels) {
+      if (ch === 'telegram') {
+        targets.push({
+          channel: 'telegram',
+          chatId: TELEGRAM_PERSONAL_CHAT_ID,
+          threadId: Number(TG_MESSAGE_THREAD_ID.SEC_FILING),
+          replyToMessageId: options.channelExtra.replyToMessageId,
+        });
+      } else if (ch === 'feishu') {
+        if (!LARK_USER_OPEN_ID) continue;
+        targets.push({
+          channel: 'feishu',
+          chatId: LARK_USER_OPEN_ID,
+          receiveIdType: 'open_id',
+        });
+      }
+    }
+    eventBus.emit(EVENT_CHANNEL_SEND_MESSAGE, {
+      targets,
       messages: [noFilingsMsg],
-      extra: {
-        tgExtra: {
-          chatId: options.tgExtra.chatId,
-          threadId: options.tgExtra.threadId,
-          replyToMessageId: options.tgExtra.replyToMessageId,
-        },
-      },
     });
   }
 

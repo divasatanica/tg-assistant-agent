@@ -1,14 +1,19 @@
-import { messageChannel } from '@krobert/channel/message-channel';
-import { AgentState, model } from '../global';
+import { eventBus, EVENT_CHANNEL_SEND_MESSAGE } from '@krobert/events';
+import type { ChannelTarget } from '@krobert/events';
+import { HumanMessage } from '@langchain/core/messages';
+import { AgentState } from '../global';
 import {
-  EVENT_MESSAGE_CHANNEL_SEND_MESSAGE,
   logger,
-  MESSAGE_CHANNEL,
   parseMessageContent,
   RSS_ANALYZER_MAX_RETRY_TIMES,
   RSS_ANALYZER_RETRY_BASE_DELAY_MS,
   TG_MESSAGE_THREAD_ID,
+  formatTime,
+  FEISHU_RSS_CARD_TEMPLATE_ID,
+  TELEGRAM_PERSONAL_CHAT_ID,
+  LARK_USER_OPEN_ID,
 } from '@krobert/utils';
+import { googleModelFactory } from '../../common/model';
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -22,6 +27,10 @@ export const analyzerNode = async (state: typeof AgentState.State) => {
 
   logger.info('[RSSAgent] rssData retrieved, start analyzing');
 
+  const channels = state.channelExtra?.channels ?? ['telegram'];
+
+  const llm = googleModelFactory();
+
   const context = JSON.stringify(state.rssData);
   const maxRetries =
     Number.isFinite(RSS_ANALYZER_MAX_RETRY_TIMES) && RSS_ANALYZER_MAX_RETRY_TIMES >= 0
@@ -32,14 +41,18 @@ export const analyzerNode = async (state: typeof AgentState.State) => {
       ? RSS_ANALYZER_RETRY_BASE_DELAY_MS
       : 1000;
 
-  let response: Awaited<ReturnType<typeof model.invoke>> | null = null;
+  let response: Awaited<ReturnType<typeof llm.invoke>> | null = null;
   let lastError: unknown;
 
   for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
     try {
-      response = await model.invoke([
+      logger.info(
+        `[RSSAgent] analyzer invoke attempt ${attempt + 1}/${maxRetries + 1}, ` +
+          `context length: ${context.length}`,
+      );
+      response = await llm.invoke([
         ...(state.messages || []),
-        ['user', `Here's fetched feeds organized by category as JSON format: ${context}`],
+        new HumanMessage(`Here's fetched feeds organized by category as JSON format: ${context}`),
       ]);
       break;
     } catch (error) {
@@ -59,32 +72,71 @@ export const analyzerNode = async (state: typeof AgentState.State) => {
   if (!response) {
     logger.error('[RSSAgent] analyzer invoke failed after retries', { error: lastError });
 
-    messageChannel.emit(EVENT_MESSAGE_CHANNEL_SEND_MESSAGE, {
-      channel: MESSAGE_CHANNEL.TELEGRAM,
+    const errTargets: ChannelTarget[] = [];
+    for (const ch of channels) {
+      if (ch === 'telegram') {
+        errTargets.push({
+          channel: 'telegram',
+          chatId: TELEGRAM_PERSONAL_CHAT_ID,
+          threadId: TG_MESSAGE_THREAD_ID.NEWS_REPORT,
+        });
+      } else if (ch === 'feishu') {
+        const fsId = LARK_USER_OPEN_ID;
+        if (!fsId) continue;
+        errTargets.push({
+          channel: 'feishu',
+          chatId: fsId,
+          receiveIdType: 'open_id',
+        });
+      }
+    }
+
+    eventBus.emit(EVENT_CHANNEL_SEND_MESSAGE, {
+      targets: errTargets,
       messages: ['❌ RSS 分析失败：Gemini API 在重试后仍无法返回结果，请稍后重试。'],
-      extra: {
-        tgExtra: {
-          chatId: state.tgExtra?.chatId,
-          threadId: state.tgExtra?.threadId ?? TG_MESSAGE_THREAD_ID.NEWS_REPORT,
-          replyToMessageId: state.tgExtra?.replyToMessageId,
-        },
-      },
     });
 
     throw lastError;
   }
 
-  messageChannel.emit(EVENT_MESSAGE_CHANNEL_SEND_MESSAGE, {
-    channel: MESSAGE_CHANNEL.TELEGRAM,
-    messages: [parseMessageContent(response.content)],
-    extra: {
-      tgExtra: {
-        chatId: state.tgExtra?.chatId,
-        threadId: state.tgExtra?.threadId ?? TG_MESSAGE_THREAD_ID.NEWS_REPORT,
-        replyToMessageId: state.tgExtra?.replyToMessageId,
-      },
-    },
+  // ─── Natural-language text (always present) ───
+  const reportText = parseMessageContent(response.content);
+  const category = state.categories[0] ?? 'General';
+
+  logger.info(`[RSSAgent] analyzer invoke succeeded, report length: ${reportText.length}`);
+
+  const targets: ChannelTarget[] = [];
+  for (const ch of channels) {
+    if (ch === 'telegram') {
+      targets.push({
+        channel: 'telegram',
+        chatId: TELEGRAM_PERSONAL_CHAT_ID,
+        threadId: TG_MESSAGE_THREAD_ID.NEWS_REPORT,
+        replyToMessageId: state.channelExtra?.replyToMessageId,
+      });
+    } else if (ch === 'feishu') {
+      if (!LARK_USER_OPEN_ID) continue;
+      targets.push({
+        channel: 'feishu',
+        chatId: LARK_USER_OPEN_ID,
+        receiveIdType: 'open_id',
+        feishuType: 'card_template',
+        cardTemplate: {
+          templateId: FEISHU_RSS_CARD_TEMPLATE_ID,
+          variables: {
+            title: `RSS 订阅流 - ${category}`,
+            date: formatTime(new Date(), { format: 'yyyy-MM-dd' }),
+            content: reportText,
+          },
+        },
+      });
+    }
+  }
+
+  eventBus.emit(EVENT_CHANNEL_SEND_MESSAGE, {
+    targets,
+    messages: [reportText],
   });
 
-  return { finalReport: parseMessageContent(response.content) };
+  return { finalReport: reportText };
 };

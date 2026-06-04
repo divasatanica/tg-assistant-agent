@@ -6,7 +6,8 @@
     "moduleResolution": "Bundler",
     "ignoreDeprecations": "6.0",
     "paths": {
-      "@krobert/agents": ["packages/agents"]
+      "@krobert/agents": ["packages/agents"],
+      "@krobert/events": ["packages/events"]
     },
     "lib": [
       "ES2022"
