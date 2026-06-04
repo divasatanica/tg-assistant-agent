@@ -22,16 +22,14 @@ export interface TelegramMessageTarget {
 const isDev = process.env.NODE_ENV === 'development';
 
 export const summarizerModel = googleModelFactory(
-  isDev ? 'gemma-4-26b-a4b-it' : process.env.RSS_SUMMARIZER_MODEL || 'gemma-4-26b-a4b-it',
+  isDev ? 'gemma-4-26b-a4b-it' : 'gemma-4-26b-a4b-it',
 );
 
 export const keywordModel = googleModelFactory(
-  isDev ? 'gemma-4-26b-a4b-it' : process.env.RSS_KEYWORD_MODEL || 'gemma-4-26b-a4b-it',
+  isDev ? 'gemma-4-26b-a4b-it' : 'gemini-3.1-flash-lite',
 );
 
-export const analyzerModel = googleModelFactory(
-  isDev ? 'gemma-4-26b-a4b-it' : process.env.RSS_ANALYZER_MODEL || 'gemini-3.5-flash',
-);
+export const analyzerModel = googleModelFactory(isDev ? 'gemma-4-26b-a4b-it' : 'gemini-3.5-flash');
 
 // 定义全局状态架构
 export const AgentState = Annotation.Root({
