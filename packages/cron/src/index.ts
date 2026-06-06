@@ -4,7 +4,7 @@ import { bootstrapWeatherCron } from './weather';
 
 export function startCron() {
   bootstrapRssAnalysisCron();
-  bootstrapSecFilingCron();
+  // bootstrapSecFilingCron();
   // bootstrapSecMonitorCron();
   // bootstrapWeatherCron();
 }
