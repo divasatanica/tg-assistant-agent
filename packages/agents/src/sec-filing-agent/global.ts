@@ -1,11 +1,11 @@
 import { BaseMessage } from '@langchain/core/messages';
 import { Annotation } from '@langchain/langgraph';
-import { googleModelFactory } from '../common/model';
+import { createModel } from '../common/model';
 import type { ParsedSection } from './filing-parser';
 import type { XbrlMetrics } from './xbrl-extractor';
 import { GOOGLE_MODEL_NAME_MAP } from 'packages/utils/src/config';
 
-export const model = googleModelFactory(GOOGLE_MODEL_NAME_MAP.SEC_ANALYSIS);
+export const model = createModel(GOOGLE_MODEL_NAME_MAP.SEC_ANALYSIS);
 
 export interface FilingMetadata {
   ticker: string;
