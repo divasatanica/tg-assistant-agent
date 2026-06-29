@@ -58,22 +58,13 @@ export const analyzerNode = async (state: typeof AgentState.State) => {
   let response: Awaited<ReturnType<typeof model.invoke>> | null = null;
   let lastError: unknown;
 
-  for (let attempt = 0; attempt <= 3; attempt++) {
-    try {
-      response = await model.invoke([
-        ...(state.messages || []),
-        ['user', `Here are the extracted SEC filing data for analysis:\n\n${contextJson}`],
-      ]);
-      break;
-    } catch (error) {
-      lastError = error;
-      if (attempt === 3) break;
-      const delayMs = 1000 * 2 ** attempt;
-      logger.warn(`[SEC Agent] Retrying analyzer invoke (${attempt + 1}/3) in ${delayMs}ms...`, {
-        error,
-      });
-      await new Promise((r) => setTimeout(r, delayMs));
-    }
+  try {
+    response = await model.invoke([
+      ...(state.messages || []),
+      ['user', `Here are the extracted SEC filing data for analysis:\n\n${contextJson}`],
+    ]);
+  } catch (error) {
+    lastError = error;
   }
 
   if (!response) {

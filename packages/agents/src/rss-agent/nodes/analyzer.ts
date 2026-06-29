@@ -5,16 +5,12 @@ import { AgentState, analyzerModel } from '../global';
 import {
   logger,
   parseMessageContent,
-  RSS_ANALYZER_MAX_RETRY_TIMES,
-  RSS_ANALYZER_RETRY_BASE_DELAY_MS,
   TG_MESSAGE_THREAD_ID,
   formatTime,
   FEISHU_RSS_CARD_TEMPLATE_ID,
   TELEGRAM_PERSONAL_CHAT_ID,
   LARK_USER_OPEN_ID,
 } from '@krobert/utils';
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const analyzerNode = async (state: typeof AgentState.State) => {
   const isEmpty =
@@ -36,45 +32,21 @@ export const analyzerNode = async (state: typeof AgentState.State) => {
         keywords: state.keywords,
       })
     : JSON.stringify(state.rssData);
-  const maxRetries =
-    Number.isFinite(RSS_ANALYZER_MAX_RETRY_TIMES) && RSS_ANALYZER_MAX_RETRY_TIMES >= 0
-      ? Math.floor(RSS_ANALYZER_MAX_RETRY_TIMES)
-      : 3;
-  const baseDelayMs =
-    Number.isFinite(RSS_ANALYZER_RETRY_BASE_DELAY_MS) && RSS_ANALYZER_RETRY_BASE_DELAY_MS > 0
-      ? RSS_ANALYZER_RETRY_BASE_DELAY_MS
-      : 1000;
-
   let response: Awaited<ReturnType<typeof analyzerModel.invoke>> | null = null;
   let lastError: unknown;
 
-  for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
-    try {
-      logger.info(
-        `[RSSAgent] analyzer invoke attempt ${attempt + 1}/${maxRetries + 1}, ` +
-          `context length: ${context.length}`,
-      );
-      response = await analyzerModel.invoke([
-        ...(state.messages || []),
-        new HumanMessage(
-          hasSummaries
-            ? `Here are summarized articles and keywords for analysis:\n\n${context}`
-            : `Here's fetched feeds organized by category as JSON format: ${context}`,
-        ),
-      ]);
-      break;
-    } catch (error) {
-      lastError = error;
-      if (attempt === maxRetries) {
-        break;
-      }
-      const delayMs = baseDelayMs * 2 ** attempt;
-      logger.warn(
-        `[RSSAgent] analyzer invoke failed, retrying (${attempt + 1}/${maxRetries}) in ${delayMs}ms`,
-        { error },
-      );
-      await sleep(delayMs);
-    }
+  try {
+    logger.info(`[RSSAgent] analyzer invoke started, context length: ${context.length}`);
+    response = await analyzerModel.invoke([
+      ...(state.messages || []),
+      new HumanMessage(
+        hasSummaries
+          ? `Here are summarized articles and keywords for analysis:\n\n${context}`
+          : `Here's fetched feeds organized by category as JSON format: ${context}`,
+      ),
+    ]);
+  } catch (error) {
+    lastError = error;
   }
 
   if (!response) {
